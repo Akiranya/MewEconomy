@@ -1,0 +1,17 @@
+command:
+  plugin-reloaded: "&6MewEconomy 的配置和语言文件已重载."
+  daily-balance:
+    view: "&6你的每日系统商店资金: &e&l{balance} 软妹币"
+    time: "&6离资金重置还有大约 &l&b{time} &e&l小时 &7( ´ ▽ ` )ﾉ"
+  system-balance:
+    view: "&6服务姬的系统余额: &e&l{balance} 软妹币"
+    pay:
+      success: "&b{amount} &6转账成功!"
+      failed: "&c转账失败!"
+  setwarp:
+    success: "&6传送点 {name} ({location}) 已设置成功!"
+    overwrite: "&c设置失败, 你所在的位置已经有别人的传送点了."
+    invalid-name: "&6你指定的传送点名字无效."
+chat:
+  insufficient-daily-balance: "&e交易失败...需要 {required_amount} 你现拥有每日系统资金 {daily_balance} 软妹币 ∑(ﾟДﾟ)"
+  reach-daily-balance: "&e提示: 你的每日系统商店资金已满, 继续购买不会增加你的每日系统资金"

@@ -1,0 +1,9 @@
+name: MewEconomy
+main: co.mcsky.meweconomy.MewEconomy
+version: ${version}
+api-version: 1.13
+author: Nailm
+prefix: MewEconomy
+website: https://mimaru.me
+depend: [ MoeLibrary, Essentials, helper, Vault, NyaaCore, Towny, ChestShop ]
+loadbefore: [ NyaaUtils ]
