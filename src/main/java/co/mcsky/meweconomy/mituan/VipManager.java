@@ -23,7 +23,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
-import java.util.UUID;
 import java.util.regex.Pattern;
 
 import static co.mcsky.meweconomy.MewEconomy.plugin;
@@ -31,7 +30,6 @@ import static co.mcsky.meweconomy.MewEconomy.plugin;
 public class VipManager implements TerminableModule {
 
     private static final String ESS_PER_WARP_PERM_PREFIX = "essentials.warps.";
-    private static final String ESS_WARP_OVERWRITE_PERM_PREFIX = "essentials.warp.overwrite.";
 
     private final IEssentials ess;
     private final LuckPermsUtil lp;
@@ -60,7 +58,7 @@ public class VipManager implements TerminableModule {
         }
 
         final User iu = ess.getUser(p);
-        if (warpLoc == null || name.equalsIgnoreCase(p.getName()) || iu.isAuthorized(ESS_WARP_OVERWRITE_PERM_PREFIX + StringUtil.safeString(name))) {
+        if (warpLoc == null || name.equalsIgnoreCase(p.getName()) || iu.isAuthorized("essentials.warp.overwrite." + StringUtil.safeString(name))) {
             Date expiryDate = iu.getCommandCooldownExpiry("setwarp");
             if (expiryDate != null && expiryDate.after(new Date())) {
                 final Instant expireInstant = expiryDate.toInstant();
@@ -103,14 +101,6 @@ public class VipManager implements TerminableModule {
 
     public boolean isPlayerVip(Player player) {
         return lp.isPlayerInGroup(player, plugin.config.vip_group_name);
-    }
-
-    private void addOverwriteWarpPermission(UUID vipUuid, String vipPlayerName) {
-        lp.userAddPermissionAsync(vipUuid, ESS_WARP_OVERWRITE_PERM_PREFIX + vipPlayerName);
-    }
-
-    private void removeOverwriteWarpPermission(UUID vipUuid, String vipPlayerName) {
-        lp.userAddPermissionAsync(vipUuid, ESS_WARP_OVERWRITE_PERM_PREFIX + vipPlayerName);
     }
 
     private void addSharedWarpPermission(String vipPlayerName) {
