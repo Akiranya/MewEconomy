@@ -47,6 +47,7 @@ public class MewEconomy extends ExtendedJavaPlugin {
             getLogger().severe(e.getMessage());
             getLogger().severe("Some vault registration is not present");
             disable();
+            return;
         }
 
         // after vault is loaded successfully, initialize system account
@@ -87,7 +88,8 @@ public class MewEconomy extends ExtendedJavaPlugin {
     @Override
     protected void disable() {
         // save data source into file
-        dailyBalanceFileHandler.save(dailyBalanceDataSource);
+        if (dailyBalanceFileHandler != null)
+            dailyBalanceFileHandler.save(dailyBalanceDataSource);
     }
 
     public boolean isDebugMode() {
