@@ -5,7 +5,7 @@ import cat.nyaa.nyaacore.component.NyaaComponent;
 import co.aikar.commands.PaperCommandManager;
 import co.mcsky.meweconomy.daily.ChestShopDailyBalanceProcessor;
 import co.mcsky.meweconomy.daily.DailyBalanceDataSource;
-import co.mcsky.meweconomy.daily.DailyBalanceDataSourceLoader;
+import co.mcsky.meweconomy.daily.DailyBalanceFileHandler;
 import co.mcsky.meweconomy.limit.ChestShopOpenHoursProcessor;
 import co.mcsky.meweconomy.mituan.VipManager;
 import co.mcsky.meweconomy.taxes.ChestShopTaxProcessor;
@@ -31,7 +31,7 @@ public class MewEconomy extends ExtendedJavaPlugin {
     private LuckPerms lp;
     private SystemAccountUtils systemBalance;
 
-    private DailyBalanceDataSourceLoader dailyBalanceDataSourceLoader;
+    private DailyBalanceFileHandler dailyBalanceFileHandler;
     private DailyBalanceDataSource dailyBalanceDataSource;
     private VipManager vipManager;
 
@@ -62,15 +62,15 @@ public class MewEconomy extends ExtendedJavaPlugin {
         this.config.save();
 
         // load data source from file
-        dailyBalanceDataSourceLoader = new DailyBalanceDataSourceLoader();
-        dailyBalanceDataSource = dailyBalanceDataSourceLoader.load().orElseGet(() -> {
+        dailyBalanceFileHandler = new DailyBalanceFileHandler();
+        dailyBalanceDataSource = dailyBalanceFileHandler.load().orElseGet(() -> {
             getLogger().warning("Data file does not exist, creating new instance");
             return new DailyBalanceDataSource();
         });
 
         // schedule task to save data periodically
         Schedulers.async().runRepeating(() -> {
-            dailyBalanceDataSourceLoader.save(dailyBalanceDataSource);
+            dailyBalanceFileHandler.save(dailyBalanceDataSource);
             getLogger().info("Data source saved successfully!");
         }, 0, TimeUnit.SECONDS, this.config.save_interval, TimeUnit.SECONDS).bindWith(this);
 
@@ -78,7 +78,7 @@ public class MewEconomy extends ExtendedJavaPlugin {
         bindModule(new ChestShopTaxProcessor(systemBalance));
         bindModule(new ChestShopOpenHoursProcessor());
         bindModule(new ChestShopDailyBalanceProcessor(dailyBalanceDataSource));
-        this.vipManager = bindModule(new VipManager());
+        vipManager = bindModule(new VipManager());
 
         loadLanguages();
         registerCommands();
@@ -87,7 +87,7 @@ public class MewEconomy extends ExtendedJavaPlugin {
     @Override
     protected void disable() {
         // save data source into file
-        dailyBalanceDataSourceLoader.save(dailyBalanceDataSource);
+        dailyBalanceFileHandler.save(dailyBalanceDataSource);
     }
 
     public boolean isDebugMode() {
@@ -109,6 +109,10 @@ public class MewEconomy extends ExtendedJavaPlugin {
             }
             return null;
         });
+    }
+
+    public void reload() {
+        // TODO can reload data source
     }
 
     public Economy getEco() {

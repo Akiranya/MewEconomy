@@ -13,14 +13,14 @@ import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 import java.io.File;
 import java.nio.file.Path;
 
-public class DailyBalanceDataSourceLoader extends FileStorageHandler<DailyBalanceDataSource> {
+public class DailyBalanceFileHandler extends FileStorageHandler<DailyBalanceDataSource> {
 
     private final static String fileName = "data";
     private final static String fileExt = ".yml";
     private final YamlConfigurationLoader loader;
     private CommentedConfigurationNode root;
 
-    public DailyBalanceDataSourceLoader() {
+    public DailyBalanceFileHandler() {
         super(fileName, fileExt, MewEconomy.plugin.getDataFolder());
         TypeSerializerCollection s = YamlConfigFactory.typeSerializers().childBuilder()
                 .register(DailyBalanceModel.class, new DailyBalanceModelSerializer())

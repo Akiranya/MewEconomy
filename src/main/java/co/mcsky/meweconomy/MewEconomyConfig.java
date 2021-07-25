@@ -51,11 +51,11 @@ public class MewEconomyConfig {
         debug = root.node("debug").getBoolean(true);
         save_interval = root.node("save-interval").getLong(300L);
         daily_balance = root.node("daily-balance").getDouble(1000D);
-        daily_balance_buy_percent = root.node("daily-balance-buy-percent").getDouble(80D);
+        daily_balance_buy_percent = root.node("daily-balance-buy-percent").getDouble(25D);
         daily_balance_timeout = root.node("daily-balance-timeout").getLong(TimeUnit.HOURS.toMillis(20));
         daily_balance_remind_full = root.node("daily-balance-remind-full").getBoolean(false);
         admin_shop_buy_tax_percent = root.node("admin-shop-buy-tax-percent").getDouble(100D);
-        player_shop_tax_percent = root.node("player-shop-tax-percent").getDouble(10D);
+        player_shop_tax_percent = root.node("player-shop-tax-percent").getDouble(25D);
         vip_enabled = root.node("vip-enabled").getBoolean(false);
         vip_group_name = root.node("vip-group-name").getString("vip");
         vip_shared_warp_group_name = root.node("vip-shared-warp-group-name").getString("vip_shared_warps");
