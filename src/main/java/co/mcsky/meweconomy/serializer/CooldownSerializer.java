@@ -12,6 +12,8 @@ import java.util.concurrent.TimeUnit;
 
 public class CooldownSerializer implements TypeSerializer<Cooldown> {
 
+    public static final TypeSerializer<Cooldown> INSTANCE = new CooldownSerializer();
+
     @Override
     public Cooldown deserialize(Type type, ConfigurationNode node) throws SerializationException {
         long lastTested = node.node("lastTested").getLong();

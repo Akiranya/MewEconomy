@@ -62,7 +62,6 @@ public class BukkitTypeSerializer implements TypeSerializer<ConfigurationSeriali
 
     @Override
     public void serialize(Type type, @Nullable ConfigurationSerializable from, ConfigurationNode to) throws SerializationException {
-        Preconditions.checkNotNull(from, "from");
         Map<String, Object> serialized = from.serialize();
 
         Map<String, Object> map = new LinkedHashMap<>(serialized.size() + 1);

@@ -14,14 +14,16 @@ import java.util.Objects;
 
 public class DailyBalanceDataSourceSerializer implements TypeSerializer<DailyBalanceDataSource> {
 
-    @Override public DailyBalanceDataSource deserialize(Type type, ConfigurationNode node) throws SerializationException {
+    @Override
+    public DailyBalanceDataSource deserialize(Type type, ConfigurationNode node) throws SerializationException {
         DailyBalanceDataSource dataSource = new DailyBalanceDataSource();
         List<DailyBalanceModel> playerModels = node.node("players").getList(DailyBalanceModel.class, new ArrayList<>());
         dataSource.addPlayerModels(playerModels);
         return dataSource;
     }
 
-    @Override public void serialize(Type type, @Nullable DailyBalanceDataSource dataSource, ConfigurationNode node) throws
+    @Override
+    public void serialize(Type type, @Nullable DailyBalanceDataSource dataSource, ConfigurationNode node) throws
             SerializationException {
         Objects.requireNonNull(dataSource, "dataSource");
         node.node("version").set(1);

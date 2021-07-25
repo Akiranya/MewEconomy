@@ -13,8 +13,8 @@ import de.themoep.utils.lang.bukkit.LanguageManager;
 import me.lucko.helper.Schedulers;
 import me.lucko.helper.Services;
 import me.lucko.helper.plugin.ExtendedJavaPlugin;
+import net.luckperms.api.LuckPerms;
 import net.milkbowl.vault.economy.Economy;
-import net.milkbowl.vault.permission.Permission;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -28,12 +28,11 @@ public class MewEconomy extends ExtendedJavaPlugin {
     public LanguageManager lang;
 
     private Economy eco;
-    private Permission perm;
+    private LuckPerms lp;
     private SystemAccountUtils systemBalance;
 
-    private DailyBalanceDataSourceLoader dataSourceLoader;
-    private DailyBalanceDataSource dataSource;
-
+    private DailyBalanceDataSourceLoader dailyBalanceDataSourceLoader;
+    private DailyBalanceDataSource dailyBalanceDataSource;
     private VipManager vipManager;
 
     @Override
@@ -43,7 +42,7 @@ public class MewEconomy extends ExtendedJavaPlugin {
         // load vault services
         try {
             this.eco = Services.load(Economy.class);
-            this.perm = Services.load(Permission.class);
+            this.lp = Services.load(LuckPerms.class);
         } catch (IllegalStateException e) {
             getLogger().severe(e.getMessage());
             getLogger().severe("Some vault registration is not present");
@@ -63,34 +62,32 @@ public class MewEconomy extends ExtendedJavaPlugin {
         this.config.save();
 
         // load data source from file
-        dataSourceLoader = new DailyBalanceDataSourceLoader();
-        dataSource = dataSourceLoader.load().orElse(new DailyBalanceDataSource());
+        dailyBalanceDataSourceLoader = new DailyBalanceDataSourceLoader();
+        dailyBalanceDataSource = dailyBalanceDataSourceLoader.load().orElseGet(() -> {
+            getLogger().warning("Data file does not exist, creating new instance");
+            return new DailyBalanceDataSource();
+        });
 
         // schedule task to save data periodically
-        Schedulers.async().runRepeating(
-                () -> {
-                    dataSourceLoader.save(dataSource);
-                    getLogger().info("Data source saved successfully!");
-                },
-                this.config.save_interval, TimeUnit.SECONDS,
-                this.config.save_interval, TimeUnit.SECONDS).bindWith(this);
+        Schedulers.async().runRepeating(() -> {
+            dailyBalanceDataSourceLoader.save(dailyBalanceDataSource);
+            getLogger().info("Data source saved successfully!");
+        }, 0, TimeUnit.SECONDS, this.config.save_interval, TimeUnit.SECONDS).bindWith(this);
+
+        // register modules
+        bindModule(new ChestShopTaxProcessor(systemBalance));
+        bindModule(new ChestShopOpenHoursProcessor());
+        bindModule(new ChestShopDailyBalanceProcessor(dailyBalanceDataSource));
+        this.vipManager = bindModule(new VipManager());
 
         loadLanguages();
         registerCommands();
-
-        // register listeners
-        bindModule(new ChestShopTaxProcessor(systemBalance));
-        bindModule(new ChestShopOpenHoursProcessor());
-        bindModule(new ChestShopDailyBalanceProcessor(dataSource));
-        bindModule(new VipManager());
     }
 
     @Override
     protected void disable() {
-        plugin = null;
-
         // save data source into file
-        dataSourceLoader.save(dataSource);
+        dailyBalanceDataSourceLoader.save(dailyBalanceDataSource);
     }
 
     public boolean isDebugMode() {
@@ -99,7 +96,7 @@ public class MewEconomy extends ExtendedJavaPlugin {
 
     public void registerCommands() {
         PaperCommandManager commands = new PaperCommandManager(this);
-        commands.registerCommand(new MewEconomyCommands(commands, dataSource));
+        commands.registerCommand(new MewEconomyCommands(commands, dailyBalanceDataSource, vipManager));
     }
 
     public void loadLanguages() {
@@ -118,8 +115,8 @@ public class MewEconomy extends ExtendedJavaPlugin {
         return eco;
     }
 
-    public Permission getPerm() {
-        return perm;
+    public LuckPerms getPerm() {
+        return lp;
     }
 
     public SystemAccountUtils getSystemAccount() {
@@ -142,7 +139,7 @@ public class MewEconomy extends ExtendedJavaPlugin {
         return getMessage(plugin.getServer().getConsoleSender(), key, replacements);
     }
 
-    public DailyBalanceDataSource getDataSource() {
-        return dataSource;
+    public DailyBalanceDataSource getDailyBalanceDataSource() {
+        return dailyBalanceDataSource;
     }
 }

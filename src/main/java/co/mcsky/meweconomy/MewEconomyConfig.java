@@ -3,7 +3,6 @@ package co.mcsky.meweconomy;
 import co.mcsky.meweconomy.config.YamlConfigFactory;
 import org.spongepowered.configurate.CommentedConfigurationNode;
 import org.spongepowered.configurate.ConfigurateException;
-import org.spongepowered.configurate.yaml.NodeStyle;
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 
 import java.io.File;
@@ -22,12 +21,13 @@ public class MewEconomyConfig {
     public long daily_balance_timeout;
     public boolean daily_balance_remind_full;
 
-    public int admin_shop_buy_tax_percent;
-    public int player_shop_tax_percent;
+    public double admin_shop_buy_tax_percent;
+    public double player_shop_tax_percent;
 
     public boolean vip_enabled;
     public String vip_group_name;
     public String vip_shared_warp_group_name;
+    public long vip_setwarp_cooldown;
 
     /* config nodes end */
 
@@ -35,11 +35,7 @@ public class MewEconomyConfig {
     private CommentedConfigurationNode root;
 
     public MewEconomyConfig() {
-        loader = YamlConfigurationLoader.builder()
-                .path(new File(MewEconomy.plugin.getDataFolder(), FILENAME).toPath())
-                .nodeStyle(NodeStyle.BLOCK)
-                .indent(2)
-                .build();
+        loader = YamlConfigFactory.loader(new File(MewEconomy.plugin.getDataFolder(), FILENAME));
     }
 
     public void load() {
@@ -58,11 +54,12 @@ public class MewEconomyConfig {
         daily_balance_buy_percent = root.node("daily-balance-buy-percent").getDouble(80D);
         daily_balance_timeout = root.node("daily-balance-timeout").getLong(TimeUnit.HOURS.toMillis(20));
         daily_balance_remind_full = root.node("daily-balance-remind-full").getBoolean(false);
-        admin_shop_buy_tax_percent = root.node("admin-shop-buy-tax-percent").getInt(100);
-        player_shop_tax_percent = root.node("player-shop-tax-percent").getInt(10);
+        admin_shop_buy_tax_percent = root.node("admin-shop-buy-tax-percent").getDouble(100D);
+        player_shop_tax_percent = root.node("player-shop-tax-percent").getDouble(10D);
         vip_enabled = root.node("vip-enabled").getBoolean(false);
         vip_group_name = root.node("vip-group-name").getString("vip");
-        vip_shared_warp_group_name = root.node("vip-shared-group-name").getString("vip_shared_warps");
+        vip_shared_warp_group_name = root.node("vip-shared-warp-group-name").getString("vip_shared_warps");
+        vip_setwarp_cooldown = root.node("vip-setwarp-cooldown").getLong(TimeUnit.HOURS.toMillis(20));
     }
 
     public void save() {
@@ -73,7 +70,4 @@ public class MewEconomyConfig {
         }
     }
 
-    public CommentedConfigurationNode root() {
-        return root;
-    }
 }

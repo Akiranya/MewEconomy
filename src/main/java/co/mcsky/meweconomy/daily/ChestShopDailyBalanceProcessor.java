@@ -65,11 +65,13 @@ public class ChestShopDailyBalanceProcessor implements TerminableModule {
                     if (model.getCooldown().test()) {
                         model.resetDailyBalance();
                         if (MewEconomy.plugin.isDebugMode()) {
-                            MewEconomy.plugin.getLogger().info("Player %s's daily balance reset");
+                            MewEconomy.plugin.getLogger().info("Player %s's daily balance reset".formatted(player.getName()));
                         }
                     }
 
+                    // the price on the admin shop
                     final double price = e.getExactPrice().doubleValue();
+
                     switch (e.getTransactionType()) {
                         case BUY -> {
                             double increment = price * MewEconomy.plugin.config.daily_balance_buy_percent / 100D;
@@ -85,7 +87,7 @@ public class ChestShopDailyBalanceProcessor implements TerminableModule {
                             }
                         }
                         case SELL -> {
-                            if (model.getDailyBalance() - price < 0) {
+                            if (model.getDailyBalance() < price) {
                                 e.setCancelled(PreTransactionEvent.TransactionOutcome.OTHER);
                                 player.sendMessage(MewEconomy.plugin.getMessage(player, "chat.insufficient-daily-balance",
                                         "required_amount", price, "daily_balance", model.getDailyBalance()));

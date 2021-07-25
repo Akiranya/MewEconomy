@@ -1,17 +1,13 @@
 package co.mcsky.meweconomy.daily;
 
 import co.mcsky.meweconomy.MewEconomy;
-import co.mcsky.meweconomy.serializer.CooldownSerializer;
+import co.mcsky.meweconomy.config.YamlConfigFactory;
 import co.mcsky.meweconomy.serializer.DailyBalanceDataSourceSerializer;
 import co.mcsky.meweconomy.serializer.DailyBalanceModelSerializer;
-import com.google.common.reflect.TypeToken;
-import me.lucko.helper.config.ConfigFactory;
-import me.lucko.helper.cooldown.Cooldown;
 import me.lucko.helper.serialize.FileStorageHandler;
 import org.spongepowered.configurate.CommentedConfigurationNode;
 import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.serialize.TypeSerializerCollection;
-import org.spongepowered.configurate.yaml.NodeStyle;
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 
 import java.io.File;
@@ -26,35 +22,30 @@ public class DailyBalanceDataSourceLoader extends FileStorageHandler<DailyBalanc
 
     public DailyBalanceDataSourceLoader() {
         super(fileName, fileExt, MewEconomy.plugin.getDataFolder());
-
-        TypeSerializerCollection serializers = TypeSerializerCollection.builder()
-                .register(DailyBalanceDataSource.class, new DailyBalanceDataSourceSerializer())
+        TypeSerializerCollection s = YamlConfigFactory.typeSerializers().childBuilder()
                 .register(DailyBalanceModel.class, new DailyBalanceModelSerializer())
-                .register(Cooldown.class, new CooldownSerializer())
+                .register(DailyBalanceDataSource.class, new DailyBalanceDataSourceSerializer())
                 .build();
-        loader = YamlConfigurationLoader.builder()
-                .path(new File(MewEconomy.plugin.getDataFolder(), fileName + fileExt).toPath())
-                .defaultOptions(opts -> opts.serializers(builder -> builder.registerAll(serializers)))
-                .nodeStyle(NodeStyle.BLOCK)
-                .indent(2)
-                .build();
+        loader = YamlConfigFactory.loader(new File(MewEconomy.plugin.getDataFolder(), fileName + fileExt));
         try {
-            root = loader.load();
+            root = loader.load(loader.defaultOptions().serializers(s));
         } catch (ConfigurateException e) {
             e.printStackTrace();
         }
     }
 
-    @Override protected DailyBalanceDataSource readFromFile(Path path) {
+    @Override
+    protected DailyBalanceDataSource readFromFile(Path path) {
         try {
-            return loader.load().get(DailyBalanceDataSource.class);
+            return root.get(DailyBalanceDataSource.class);
         } catch (ConfigurateException e) {
             e.printStackTrace();
             return null;
         }
     }
 
-    @Override protected void saveToFile(Path path, DailyBalanceDataSource dataSource) {
+    @Override
+    protected void saveToFile(Path path, DailyBalanceDataSource dataSource) {
         try {
             loader.save(root.set(dataSource));
         } catch (ConfigurateException e) {

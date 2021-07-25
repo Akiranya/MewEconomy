@@ -1,5 +1,7 @@
 package co.mcsky.meweconomy.mituan;
 
+import co.aikar.commands.ACFBukkitUtil;
+import co.mcsky.meweconomy.LuckPermsUtil;
 import co.mcsky.meweconomy.MewEconomy;
 import com.earth2me.essentials.IEssentials;
 import com.earth2me.essentials.User;
@@ -17,19 +19,35 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.jetbrains.annotations.NotNull;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
+import java.util.UUID;
+import java.util.regex.Pattern;
+
 import static co.mcsky.meweconomy.MewEconomy.plugin;
 
 public class VipManager implements TerminableModule {
 
+    private static final String ESS_PER_WARP_PERM_PREFIX = "essentials.warps.";
+    private static final String ESS_WARP_OVERWRITE_PERM_PREFIX = "essentials.warp.overwrite.";
+
     private final IEssentials ess;
+    private final LuckPermsUtil lp;
 
     public VipManager() {
         this.ess = (net.ess3.api.IEssentials) plugin.getServer().getPluginManager().getPlugin("Essentials");
+        this.lp = new LuckPermsUtil();
     }
 
-    public void setWarp(Player player, String name) {
+    /**
+     * @param p    the player issuing this command
+     * @param name the warp name to set
+     */
+    public void setWarpCommand(Player p, String name) {
         if (NumberUtil.isInt(name)) {
-            player.sendMessage(MewEconomy.plugin.getMessage(player, "command.setwarp.invalid-name", "name", name));
+            p.sendMessage(MewEconomy.plugin.getMessage(p, "command.setwarp.invalid-name", "name", name));
             return;
         }
 
@@ -41,44 +59,66 @@ public class VipManager implements TerminableModule {
         } catch (final WarpNotFoundException | InvalidWorldException ignored) {
         }
 
-        name = name.toLowerCase(); // force lowercase
-        final User iu = ess.getUser(player);
-        if (warpLoc == null || iu.isAuthorized("essentials.warp.overwrite." + StringUtil.safeString(name))) {
+        final User iu = ess.getUser(p);
+        if (warpLoc == null || name.equalsIgnoreCase(p.getName()) || iu.isAuthorized(ESS_WARP_OVERWRITE_PERM_PREFIX + StringUtil.safeString(name))) {
+            Date expiryDate = iu.getCommandCooldownExpiry("setwarp");
+            if (expiryDate != null && expiryDate.after(new Date())) {
+                final Instant expireInstant = expiryDate.toInstant();
+                final Instant now = Instant.now();
+                final long l = Duration.between(now, expireInstant).toHours();
+                p.sendMessage(plugin.getMessage(p, "command.setwarp.cooldown", "remaining", l));
+                return;
+            }
             try {
                 warps.setWarp(iu, name, iu.getLocation());
+
+                final Date expiresAt = Date.from(Instant.now().plus(plugin.config.vip_setwarp_cooldown, ChronoUnit.MILLIS));
+                iu.addCommandCooldown(Pattern.compile("^setwarp"), expiresAt, true);
+                p.sendMessage(plugin.getMessage(p, "command.setwarp.success", "name", name, "location", ACFBukkitUtil.blockLocationToString(p.getLocation())));
+                // add shared permission
+                addSharedWarpPermission(name);
             } catch (Exception ignored) {
             }
         } else {
-            player.sendMessage(plugin.getMessage(player, "command.setwarp.overwrite"));
-            return;
-        }
-
-        // setting warp succeeds
-        player.sendMessage(plugin.getMessage(player, "command.setwarp.success"));
-        // add shared permission
-        String perm = "essentials.warps." + name;
-        final boolean success = plugin.getPerm().groupAdd((String) null, plugin.config.vip_shared_warp_group_name, perm);
-        if (plugin.isDebugMode()) {
-            if (success) plugin.getLogger().info("Shared permission added: " + perm);
-            else plugin.getLogger().severe("Failed to add shared permission: " + perm);
+            p.sendMessage(plugin.getMessage(p, "command.setwarp.overwrite"));
         }
     }
 
     @Override
     public void setup(@NotNull TerminableConsumer consumer) {
-        if (!plugin.config.vip_enabled) return;
-
         // 如果玩家是会员
         // 在加入游戏时需要向共享权限组添加传送点的权限
         // 在退出游戏时从共享权限组中移除传送点的权限
-        final String essPerWarpPermPrefix = "essentials.warps.";
         Events.subscribe(PlayerJoinEvent.class)
-                .filter(e -> plugin.getPerm().playerInGroup(e.getPlayer(), plugin.config.vip_group_name))
-                .handler(e -> plugin.getPerm().groupAdd((String) null, plugin.config.vip_shared_warp_group_name, essPerWarpPermPrefix + e.getPlayer().getName().toLowerCase()))
+                .filter(e -> plugin.config.vip_enabled)
+                .filter(e -> isPlayerVip(e.getPlayer()))
+                .handler(e -> addSharedWarpPermission(e.getPlayer().getName().toLowerCase()))
                 .bindWith(consumer);
         Events.subscribe(PlayerQuitEvent.class)
-                .filter(e -> plugin.getPerm().playerInGroup(e.getPlayer(), plugin.config.vip_group_name))
-                .handler(e -> plugin.getPerm().groupRemove((String) null, plugin.config.vip_shared_warp_group_name, essPerWarpPermPrefix + e.getPlayer().getName().toLowerCase()))
+                .filter(e -> plugin.config.vip_enabled)
+                .filter(e -> isPlayerVip(e.getPlayer()))
+                .handler(e -> removeSharedWarpPermission(e.getPlayer().getName().toLowerCase()))
                 .bindWith(consumer);
     }
+
+    public boolean isPlayerVip(Player player) {
+        return lp.isPlayerInGroup(player, plugin.config.vip_group_name);
+    }
+
+    private void addOverwriteWarpPermission(UUID vipUuid, String vipPlayerName) {
+        lp.userAddPermissionAsync(vipUuid, ESS_WARP_OVERWRITE_PERM_PREFIX + vipPlayerName);
+    }
+
+    private void removeOverwriteWarpPermission(UUID vipUuid, String vipPlayerName) {
+        lp.userAddPermissionAsync(vipUuid, ESS_WARP_OVERWRITE_PERM_PREFIX + vipPlayerName);
+    }
+
+    private void addSharedWarpPermission(String vipPlayerName) {
+        lp.groupAddPermissionAsync(plugin.config.vip_shared_warp_group_name, ESS_PER_WARP_PERM_PREFIX + vipPlayerName);
+    }
+
+    private void removeSharedWarpPermission(String vipPlayerName) {
+        lp.groupRemovePermissionAsync(plugin.config.vip_shared_warp_group_name, ESS_PER_WARP_PERM_PREFIX + vipPlayerName);
+    }
+
 }
