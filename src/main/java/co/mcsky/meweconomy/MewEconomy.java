@@ -3,12 +3,12 @@ package co.mcsky.meweconomy;
 import cat.nyaa.nyaacore.component.ISystemBalance;
 import cat.nyaa.nyaacore.component.NyaaComponent;
 import co.aikar.commands.PaperCommandManager;
-import co.mcsky.meweconomy.daily.ChestShopDailyBalanceProcessor;
+import co.mcsky.meweconomy.daily.DailyBalanceProcessor;
 import co.mcsky.meweconomy.daily.DailyBalanceDataSource;
 import co.mcsky.meweconomy.daily.DailyBalanceFileHandler;
-import co.mcsky.meweconomy.limit.ChestShopOpenHoursProcessor;
-import co.mcsky.meweconomy.mituan.VipManager;
-import co.mcsky.meweconomy.taxes.ChestShopTaxProcessor;
+import co.mcsky.meweconomy.limit.OpenHoursProcessor;
+import co.mcsky.meweconomy.rice.RiceManager;
+import co.mcsky.meweconomy.taxes.ShopTaxProcessor;
 import de.themoep.utils.lang.bukkit.LanguageManager;
 import me.lucko.helper.Schedulers;
 import me.lucko.helper.Services;
@@ -33,7 +33,7 @@ public class MewEconomy extends ExtendedJavaPlugin {
 
     private DailyBalanceFileHandler dailyBalanceFileHandler;
     private DailyBalanceDataSource dailyBalanceDataSource;
-    private VipManager vipManager;
+    private RiceManager riceManager;
 
     @Override
     protected void enable() {
@@ -76,10 +76,10 @@ public class MewEconomy extends ExtendedJavaPlugin {
         }, 0, TimeUnit.SECONDS, this.config.save_interval, TimeUnit.SECONDS).bindWith(this);
 
         // register modules
-        bindModule(new ChestShopTaxProcessor(systemBalance));
-        bindModule(new ChestShopOpenHoursProcessor());
-        bindModule(new ChestShopDailyBalanceProcessor(dailyBalanceDataSource));
-        vipManager = bindModule(new VipManager());
+        bindModule(new ShopTaxProcessor(systemBalance));
+        bindModule(new OpenHoursProcessor());
+        bindModule(new DailyBalanceProcessor(dailyBalanceDataSource));
+        riceManager = bindModule(new RiceManager());
 
         loadLanguages();
         registerCommands();
@@ -98,7 +98,7 @@ public class MewEconomy extends ExtendedJavaPlugin {
 
     public void registerCommands() {
         PaperCommandManager commands = new PaperCommandManager(this);
-        commands.registerCommand(new MewEconomyCommands(commands, dailyBalanceDataSource, vipManager));
+        commands.registerCommand(new MewEconomyCommands(commands, dailyBalanceDataSource, riceManager));
     }
 
     public void loadLanguages() {

@@ -17,12 +17,12 @@ import static co.mcsky.meweconomy.MewEconomy.plugin;
 /**
  * Modifies the amount of money in the ChestShop transaction.
  */
-public class ChestShopTaxProcessor implements TerminableModule {
+public class ShopTaxProcessor implements TerminableModule {
 
     private final SystemAccountUtils systemAccount;
     private final UUID adminShopUUID;
 
-    public ChestShopTaxProcessor(SystemAccountUtils systemAccount) {
+    public ShopTaxProcessor(SystemAccountUtils systemAccount) {
         this.systemAccount = systemAccount;
         this.adminShopUUID = systemAccount.getOfflinePlayerUUIDFromName(Properties.ADMIN_SHOP_NAME);
     }
@@ -36,6 +36,7 @@ public class ChestShopTaxProcessor implements TerminableModule {
                     double amountSent = e.getAmountSent().doubleValue();
                     double amountReceived = e.getAmountReceived().doubleValue();
 
+                    double tax = 0D;
                     if (e.getPartner().equals(adminShopUUID)) {
                         // business logic 1: it's an admin shop
 
@@ -43,28 +44,27 @@ public class ChestShopTaxProcessor implements TerminableModule {
                             // player is buying items from admin shop
 
                             // make money and deposit to system account
-                            double tax = amountSent * (plugin.config.admin_shop_buy_tax_percent / 100D);
+                            tax = amountSent * (plugin.config.admin_shop_buy_tax_percent / 100D);
                             systemAccount.depositSystem(tax);
 
-                            if (plugin.isDebugMode())
+                            if (plugin.isDebugMode()){
                                 plugin.getLogger().info("System account received: %s".formatted(tax));
+                            }
                         }
+                    } else {
+                        // business logic 2: it's a player shop
 
-                        return;
+                        tax = amountReceived * (plugin.config.player_shop_tax_percent / 100D);
+                        double amountReceivedTaxed = amountReceived - tax; // tax the receiver
+                        e.setAmountReceived(BigDecimal.valueOf(amountReceivedTaxed));
+                        systemAccount.depositSystem(tax);
                     }
-
-                    // business logic 2: it's a player shop
-                    double tax = amountReceived * (plugin.config.player_shop_tax_percent / 100D);
-                    double amountReceivedTaxed = amountReceived - tax; // tax the receiver
-                    e.setAmountReceived(BigDecimal.valueOf(amountReceivedTaxed));
-                    systemAccount.depositSystem(tax);
 
                     if (plugin.isDebugMode()) {
                         plugin.getLogger().info("Admin shop UUID: %s".formatted(adminShopUUID));
                         plugin.getLogger().info("System account received: %s".formatted(tax));
                         plugin.getLogger().info("AmountSent: %s".formatted(e.getAmountSent()));
                         plugin.getLogger().info("AmountReceived: %s".formatted(e.getAmountReceived()));
-                        plugin.getLogger().info("AmountReceivedTaxed: %s".formatted(amountReceivedTaxed));
                         plugin.getLogger().info("Initiator: %s".formatted(e.getInitiator().getUniqueId()));
                         plugin.getLogger().info("Partner: %s".formatted(e.getPartner()));
                         plugin.getLogger().info("Sender: %s".formatted(e.getSender()));

@@ -5,7 +5,7 @@ import co.aikar.commands.ConditionFailedException;
 import co.aikar.commands.PaperCommandManager;
 import co.aikar.commands.annotation.*;
 import co.mcsky.meweconomy.daily.DailyBalanceDataSource;
-import co.mcsky.meweconomy.mituan.VipManager;
+import co.mcsky.meweconomy.rice.RiceManager;
 import me.lucko.helper.utils.Players;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -22,12 +22,12 @@ public class MewEconomyCommands extends BaseCommand {
 
     private final PaperCommandManager commands;
     private final DailyBalanceDataSource dataSource;
-    private final VipManager vipManager;
+    private final RiceManager riceManager;
 
-    public MewEconomyCommands(PaperCommandManager commands, DailyBalanceDataSource dataSource, VipManager vipManager) {
+    public MewEconomyCommands(PaperCommandManager commands, DailyBalanceDataSource dataSource, RiceManager riceManager) {
         this.commands = commands;
         this.dataSource = dataSource;
-        this.vipManager = vipManager;
+        this.riceManager = riceManager;
         registerCompletions();
         registerConditions();
     }
@@ -55,7 +55,7 @@ public class MewEconomyCommands extends BaseCommand {
     @Syntax("<name>")
     public void setWarp(Player player) {
         String warpName = player.getName().toLowerCase(); // force lowercase
-        vipManager.setWarpCommand(player, warpName);
+        riceManager.setWarpCommand(player, warpName);
     }
 
     @Subcommand("bal|balance")

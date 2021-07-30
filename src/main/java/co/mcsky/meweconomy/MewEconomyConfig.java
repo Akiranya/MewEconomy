@@ -27,7 +27,7 @@ public class MewEconomyConfig {
     public boolean vip_enabled;
     public String vip_group_name;
     public String vip_shared_warp_group_name;
-    public long vip_setwarp_cooldown;
+    public long vip_set_warp_cooldown;
 
     /* config nodes end */
 
@@ -59,7 +59,7 @@ public class MewEconomyConfig {
         vip_enabled = root.node("vip-enabled").getBoolean(false);
         vip_group_name = root.node("vip-group-name").getString("vip");
         vip_shared_warp_group_name = root.node("vip-shared-warp-group-name").getString("vip_shared_warps");
-        vip_setwarp_cooldown = root.node("vip-setwarp-cooldown").getLong(TimeUnit.HOURS.toMillis(20));
+        vip_set_warp_cooldown = root.node("vip-setwarp-cooldown").getLong(TimeUnit.HOURS.toMillis(20));
     }
 
     public void save() {

@@ -1,4 +1,4 @@
-package co.mcsky.meweconomy.mituan;
+package co.mcsky.meweconomy.rice;
 
 import co.aikar.commands.ACFBukkitUtil;
 import co.mcsky.meweconomy.LuckPermsUtil;
@@ -27,14 +27,14 @@ import java.util.regex.Pattern;
 
 import static co.mcsky.meweconomy.MewEconomy.plugin;
 
-public class VipManager implements TerminableModule {
+public class RiceManager implements TerminableModule {
 
     private static final String ESS_PER_WARP_PERM_PREFIX = "essentials.warps.";
 
     private final IEssentials ess;
     private final LuckPermsUtil lp;
 
-    public VipManager() {
+    public RiceManager() {
         this.ess = (net.ess3.api.IEssentials) plugin.getServer().getPluginManager().getPlugin("Essentials");
         this.lp = new LuckPermsUtil();
     }
@@ -70,9 +70,11 @@ public class VipManager implements TerminableModule {
             try {
                 warps.setWarp(iu, name, iu.getLocation());
 
-                final Date expiresAt = Date.from(Instant.now().plus(plugin.config.vip_setwarp_cooldown, ChronoUnit.MILLIS));
+                // send success message
+                final Date expiresAt = Date.from(Instant.now().plus(plugin.config.vip_set_warp_cooldown, ChronoUnit.MILLIS));
                 iu.addCommandCooldown(Pattern.compile("^setwarp"), expiresAt, true);
                 p.sendMessage(plugin.getMessage(p, "command.setwarp.success", "name", name, "location", ACFBukkitUtil.blockLocationToString(p.getLocation())));
+
                 // add shared permission
                 addSharedWarpPermission(name);
             } catch (Exception ignored) {
@@ -99,7 +101,7 @@ public class VipManager implements TerminableModule {
                 .bindWith(consumer);
     }
 
-    public boolean isPlayerVip(Player player) {
+    private boolean isPlayerVip(Player player) {
         return lp.isPlayerInGroup(player, plugin.config.vip_group_name);
     }
 
