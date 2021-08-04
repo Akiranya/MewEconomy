@@ -5,5 +5,4 @@ api-version: 1.13
 author: Nailm
 prefix: MewEconomy
 website: https://mimaru.me
-depend: [ MoeLibrary, Essentials, helper, Vault, NyaaCore, Towny, ChestShop ]
-loadbefore: [ NyaaUtils ]
+depend: [ MoeCore, Vault, helper, Essentials, Towny, ChestShop ]
