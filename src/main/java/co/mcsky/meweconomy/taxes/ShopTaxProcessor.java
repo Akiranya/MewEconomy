@@ -1,6 +1,6 @@
 package co.mcsky.meweconomy.taxes;
 
-import co.mcsky.meweconomy.SystemAccountUtils;
+import co.mcsky.moecore.MoeCore;
 import com.Acrobot.ChestShop.Configuration.Properties;
 import com.Acrobot.ChestShop.Events.Economy.CurrencyTransferEvent;
 import me.lucko.helper.Events;
@@ -19,12 +19,10 @@ import static co.mcsky.meweconomy.MewEconomy.plugin;
  */
 public class ShopTaxProcessor implements TerminableModule {
 
-    private final SystemAccountUtils systemAccount;
     private final UUID adminShopUUID;
 
-    public ShopTaxProcessor(SystemAccountUtils systemAccount) {
-        this.systemAccount = systemAccount;
-        this.adminShopUUID = systemAccount.getOfflinePlayerUUIDFromName(Properties.ADMIN_SHOP_NAME);
+    public ShopTaxProcessor() {
+        this.adminShopUUID = MoeCore.computeOfflinePlayerUUID(Properties.ADMIN_SHOP_NAME);
     }
 
     @Override
@@ -45,9 +43,9 @@ public class ShopTaxProcessor implements TerminableModule {
 
                             // make money and deposit to system account
                             tax = amountSent * (plugin.config.admin_shop_buy_tax_percent / 100D);
-                            systemAccount.depositSystem(tax);
+                            MoeCore.plugin.systemAccount().depositSystem(tax);
 
-                            if (plugin.isDebugMode()){
+                            if (plugin.isDebugMode()) {
                                 plugin.getLogger().info("System account received: %s".formatted(tax));
                             }
                         }
@@ -57,7 +55,7 @@ public class ShopTaxProcessor implements TerminableModule {
                         tax = amountReceived * (plugin.config.player_shop_tax_percent / 100D);
                         double amountReceivedTaxed = amountReceived - tax; // tax the receiver
                         e.setAmountReceived(BigDecimal.valueOf(amountReceivedTaxed));
-                        systemAccount.depositSystem(tax);
+                        MoeCore.plugin.systemAccount().depositSystem(tax);
                     }
 
                     if (plugin.isDebugMode()) {

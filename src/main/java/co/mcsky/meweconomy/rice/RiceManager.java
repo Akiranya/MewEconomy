@@ -1,8 +1,8 @@
 package co.mcsky.meweconomy.rice;
 
 import co.aikar.commands.ACFBukkitUtil;
-import co.mcsky.meweconomy.LuckPermsUtil;
 import co.mcsky.meweconomy.MewEconomy;
+import co.mcsky.moecore.luckperms.LuckPermsUtil;
 import com.earth2me.essentials.IEssentials;
 import com.earth2me.essentials.User;
 import com.earth2me.essentials.api.IWarps;
@@ -32,11 +32,9 @@ public class RiceManager implements TerminableModule {
     private static final String ESS_PER_WARP_PERM_PREFIX = "essentials.warps.";
 
     private final IEssentials ess;
-    private final LuckPermsUtil lp;
 
     public RiceManager() {
         this.ess = (net.ess3.api.IEssentials) plugin.getServer().getPluginManager().getPlugin("Essentials");
-        this.lp = new LuckPermsUtil();
     }
 
     /**
@@ -102,15 +100,15 @@ public class RiceManager implements TerminableModule {
     }
 
     private boolean isPlayerVip(Player player) {
-        return lp.isPlayerInGroup(player, plugin.config.vip_group_name);
+        return LuckPermsUtil.isPlayerInGroup(player, plugin.config.vip_group_name);
     }
 
     private void addSharedWarpPermission(String vipPlayerName) {
-        lp.groupAddPermissionAsync(plugin.config.vip_shared_warp_group_name, ESS_PER_WARP_PERM_PREFIX + vipPlayerName);
+        LuckPermsUtil.groupAddPermissionAsync(plugin.config.vip_shared_warp_group_name, ESS_PER_WARP_PERM_PREFIX + vipPlayerName);
     }
 
     private void removeSharedWarpPermission(String vipPlayerName) {
-        lp.groupRemovePermissionAsync(plugin.config.vip_shared_warp_group_name, ESS_PER_WARP_PERM_PREFIX + vipPlayerName);
+        LuckPermsUtil.groupRemovePermissionAsync(plugin.config.vip_shared_warp_group_name, ESS_PER_WARP_PERM_PREFIX + vipPlayerName);
     }
 
 }

@@ -38,7 +38,7 @@ repositories {
     maven { url 'https://repo.aikar.co/content/groups/aikar/' }
     // helper
     maven { url 'https://repo.lucko.me' }
-    // towny
+    // towny + moecore
     maven { url 'https://jitpack.io' }
     // nyaacore
     maven { url 'https://ci.nyaacat.com/maven/' }
@@ -73,10 +73,12 @@ dependencies {
 
     compileOnly('com.github.TownyAdvanced:Towny:0.97.0.11')
     compileOnly('com.acrobot.chestshop:chestshop:3.12')
-    compileOnly("cat.nyaa:nyaacore:8.1-SNAPSHOT")
 
     compileOnly('net.milkbowl.vault:VaultAPI:1.7') { transitive = false }
     compileOnly('net.ess3:EssentialsX:2.18.2') { transitive = false }
+
+    // moecore
+    compileOnly('com.github.Akiranya:MoeCore:master-SNAPSHOT')
 }
 
 test {

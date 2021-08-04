@@ -1,9 +1,9 @@
 package co.mcsky.meweconomy.daily;
 
 import co.mcsky.meweconomy.MewEconomy;
-import co.mcsky.meweconomy.config.YamlConfigFactory;
 import co.mcsky.meweconomy.serializer.DailyBalanceDataSourceSerializer;
 import co.mcsky.meweconomy.serializer.DailyBalanceModelSerializer;
+import co.mcsky.moecore.config.YamlConfigFactory;
 import me.lucko.helper.serialize.FileStorageHandler;
 import org.spongepowered.configurate.CommentedConfigurationNode;
 import org.spongepowered.configurate.ConfigurateException;

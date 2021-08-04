@@ -1,6 +1,6 @@
 package co.mcsky.meweconomy;
 
-import co.mcsky.meweconomy.config.YamlConfigFactory;
+import co.mcsky.moecore.config.YamlConfigFactory;
 import org.spongepowered.configurate.CommentedConfigurationNode;
 import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader;

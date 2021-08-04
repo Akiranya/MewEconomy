@@ -1,11 +1,9 @@
 package co.mcsky.meweconomy;
 
-import cat.nyaa.nyaacore.component.ISystemBalance;
-import cat.nyaa.nyaacore.component.NyaaComponent;
 import co.aikar.commands.PaperCommandManager;
-import co.mcsky.meweconomy.daily.DailyBalanceProcessor;
 import co.mcsky.meweconomy.daily.DailyBalanceDataSource;
 import co.mcsky.meweconomy.daily.DailyBalanceFileHandler;
+import co.mcsky.meweconomy.daily.DailyBalanceProcessor;
 import co.mcsky.meweconomy.limit.OpenHoursProcessor;
 import co.mcsky.meweconomy.rice.RiceManager;
 import co.mcsky.meweconomy.taxes.ShopTaxProcessor;
@@ -13,7 +11,6 @@ import de.themoep.utils.lang.bukkit.LanguageManager;
 import me.lucko.helper.Schedulers;
 import me.lucko.helper.Services;
 import me.lucko.helper.plugin.ExtendedJavaPlugin;
-import net.luckperms.api.LuckPerms;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -28,8 +25,6 @@ public class MewEconomy extends ExtendedJavaPlugin {
     public LanguageManager lang;
 
     private Economy eco;
-    private LuckPerms lp;
-    private SystemAccountUtils systemBalance;
 
     private DailyBalanceFileHandler dailyBalanceFileHandler;
     private DailyBalanceDataSource dailyBalanceDataSource;
@@ -42,21 +37,12 @@ public class MewEconomy extends ExtendedJavaPlugin {
         // load vault services
         try {
             this.eco = Services.load(Economy.class);
-            this.lp = Services.load(LuckPerms.class);
         } catch (IllegalStateException e) {
             getLogger().severe(e.getMessage());
             getLogger().severe("Some vault registration is not present");
             disable();
             return;
         }
-
-        // after vault is loaded successfully, initialize system account
-        this.systemBalance = new SystemAccountUtils();
-
-        // register NyaaCore ISystemBalance component
-        // so that all fee functions of NyaaUtils
-        // can link to the Towny server account
-        NyaaComponent.register(ISystemBalance.class, this.systemBalance);
 
         this.config = new MewEconomyConfig();
         this.config.load();
@@ -76,7 +62,7 @@ public class MewEconomy extends ExtendedJavaPlugin {
         }, 0, TimeUnit.SECONDS, this.config.save_interval, TimeUnit.SECONDS).bindWith(this);
 
         // register modules
-        bindModule(new ShopTaxProcessor(systemBalance));
+        bindModule(new ShopTaxProcessor());
         bindModule(new OpenHoursProcessor());
         bindModule(new DailyBalanceProcessor(dailyBalanceDataSource));
         riceManager = bindModule(new RiceManager());
@@ -117,16 +103,8 @@ public class MewEconomy extends ExtendedJavaPlugin {
         // TODO can reload data source
     }
 
-    public Economy getEco() {
+    public Economy economy() {
         return eco;
-    }
-
-    public LuckPerms getPerm() {
-        return lp;
-    }
-
-    public SystemAccountUtils getSystemAccount() {
-        return systemBalance;
     }
 
     public String getMessage(CommandSender sender, String key, Object... replacements) {

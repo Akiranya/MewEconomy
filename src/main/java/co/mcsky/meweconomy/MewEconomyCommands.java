@@ -6,6 +6,7 @@ import co.aikar.commands.PaperCommandManager;
 import co.aikar.commands.annotation.*;
 import co.mcsky.meweconomy.daily.DailyBalanceDataSource;
 import co.mcsky.meweconomy.rice.RiceManager;
+import co.mcsky.moecore.MoeCore;
 import me.lucko.helper.utils.Players;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -61,7 +62,7 @@ public class MewEconomyCommands extends BaseCommand {
     @Subcommand("bal|balance")
     public void balance(CommandSender sender) {
         sender.sendMessage(plugin.getMessage("command.system-balance.view",
-                "balance", plugin.getSystemAccount().getBalance()));
+                "balance", MoeCore.plugin.systemAccount().getBalance()));
     }
 
     @Subcommand("day|daily")
@@ -83,9 +84,9 @@ public class MewEconomyCommands extends BaseCommand {
     @Description("Take money from player and deposit it to system account")
     @Syntax("<player> <amount>")
     public void take(CommandSender sender, OfflinePlayer player, double amount) {
-        double playerBalance = plugin.getEco().getBalance(player);
+        double playerBalance = plugin.economy().getBalance(player);
         double withdraw = Math.min(playerBalance, amount);
-        if (plugin.getSystemAccount().withdrawToSystem(player, withdraw)) {
+        if (MoeCore.plugin.systemAccount().withdrawToSystem(player, withdraw)) {
             sender.sendMessage(plugin.getMessage(sender, "command.system-balance.take.sender-success", "amount", withdraw));
             sendMessageOnline(player, plugin.getMessage("command.system-balance.take.receiver-success", "amount", withdraw));
         } else {
@@ -111,10 +112,9 @@ public class MewEconomyCommands extends BaseCommand {
         @CommandCompletion("@players @nothing")
         @Syntax("<player> <percent(0-100)>")
         public void percent(CommandSender sender, OfflinePlayer player, @Conditions("limits:min=0,max=100") double percent) {
-            SystemAccountUtils systemBalance = plugin.getSystemAccount();
-            double balance = systemBalance.getBalance();
+            double balance = MoeCore.plugin.systemAccount().getBalance();
             double withdraw = Math.min(balance, balance * percent / 100D);
-            if (systemBalance.depositFromSystem(player, withdraw)) {
+            if (MoeCore.plugin.systemAccount().depositFromSystem(player, withdraw)) {
                 sender.sendMessage(plugin.getMessage(sender, "command.system-balance.give.sender-success", "amount", withdraw));
                 sendMessageOnline(player, plugin.getMessage("command.system-balance.give.receiver-success", "amount", withdraw));
             } else {
@@ -126,10 +126,9 @@ public class MewEconomyCommands extends BaseCommand {
         @CommandCompletion("@players @nothing")
         @Syntax("<player> <amount>")
         public void decimal(CommandSender sender, OfflinePlayer player, @Conditions("limits:min=0") double amount) {
-            SystemAccountUtils systemBalance = plugin.getSystemAccount();
-            double balance = systemBalance.getBalance();
+            double balance = MoeCore.plugin.systemAccount().getBalance();
             double withdraw = Math.min(balance, amount);
-            if (systemBalance.depositFromSystem(player, withdraw)) {
+            if (MoeCore.plugin.systemAccount().depositFromSystem(player, withdraw)) {
                 sender.sendMessage(plugin.getMessage(sender, "command.system-balance.give.sender-success", "amount", withdraw));
                 sendMessageOnline(player, plugin.getMessage("command.system-balance.give.receiver-success", "amount", withdraw));
             } else {
