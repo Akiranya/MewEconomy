@@ -1,8 +1,11 @@
 command:
+  datasource-saved: "&6数据已保存到文件!"
   plugin-reloaded: "&6MewEconomy 的配置和语言文件已重载."
   daily-balance:
     view: "&6你的每日系统商店资金: &e&l{balance} 软妹币"
     time: "&6离资金重置还有大约 &l&b{time} &e&l小时 &7( ´ ▽ ` )ﾉ"
+    add: "&6添加了 {amount} 软妹币到 {player} 的每日余额"
+    take: "&6从 {player} 的每日余额拿走了 {amount} 软妹币"
   system-balance:
     view: "&6系统余额: &e&l{balance} 软妹币"
     take:

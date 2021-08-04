@@ -1,5 +1,7 @@
 package co.mcsky.meweconomy.daily;
 
+import org.bukkit.OfflinePlayer;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -8,11 +10,11 @@ import java.util.UUID;
 /**
  * Represents a saved database.
  */
-public class DailyBalanceDataSource {
+public class DailyBalanceDatasource {
 
     private final Map<UUID, DailyBalanceModel> playerModelMap;
 
-    public DailyBalanceDataSource() {
+    public DailyBalanceDatasource() {
         this.playerModelMap = new HashMap<>();
     }
 
@@ -24,6 +26,10 @@ public class DailyBalanceDataSource {
         for (DailyBalanceModel p : playerModels) {
             this.playerModelMap.put(p.getPlayerUUID(), p);
         }
+    }
+
+    public DailyBalanceModel getPlayerModel(OfflinePlayer offlinePlayer) {
+        return getPlayerModel(offlinePlayer.getUniqueId());
     }
 
     public DailyBalanceModel getPlayerModel(UUID playerUUID) {

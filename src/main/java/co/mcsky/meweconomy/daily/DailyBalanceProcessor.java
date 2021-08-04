@@ -18,10 +18,10 @@ import java.util.concurrent.TimeUnit;
 
 public class DailyBalanceProcessor implements TerminableModule {
 
-    private final DailyBalanceDataSource dataSource;
+    private final DailyBalanceDatasource dataSource;
     private final CooldownMap<Player> messageReminderCooldown;
 
-    public DailyBalanceProcessor(DailyBalanceDataSource dataSource) {
+    public DailyBalanceProcessor(DailyBalanceDatasource dataSource) {
         this.dataSource = dataSource;
         this.messageReminderCooldown = CooldownMap.create(Cooldown.of(3, TimeUnit.SECONDS));
     }

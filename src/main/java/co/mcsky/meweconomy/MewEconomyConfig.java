@@ -15,6 +15,7 @@ public class MewEconomyConfig {
 
     public boolean debug;
     public long save_interval;
+    public int decimal_round;
 
     public double daily_balance;
     public double daily_balance_buy_percent;
@@ -49,6 +50,7 @@ public class MewEconomyConfig {
         /* initialize config nodes */
 
         debug = root.node("debug").getBoolean(true);
+        decimal_round = root.node("decimal_round").getInt(3);
         save_interval = root.node("save-interval").getLong(300L);
         daily_balance = root.node("daily-balance").getDouble(1000D);
         daily_balance_buy_percent = root.node("daily-balance-buy-percent").getDouble(25D);

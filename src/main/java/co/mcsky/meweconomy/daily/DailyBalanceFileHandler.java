@@ -13,7 +13,7 @@ import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 import java.io.File;
 import java.nio.file.Path;
 
-public class DailyBalanceFileHandler extends FileStorageHandler<DailyBalanceDataSource> {
+public class DailyBalanceFileHandler extends FileStorageHandler<DailyBalanceDatasource> {
 
     private final static String fileName = "data";
     private final static String fileExt = ".yml";
@@ -24,7 +24,7 @@ public class DailyBalanceFileHandler extends FileStorageHandler<DailyBalanceData
         super(fileName, fileExt, MewEconomy.plugin.getDataFolder());
         TypeSerializerCollection s = YamlConfigFactory.typeSerializers().childBuilder()
                 .register(DailyBalanceModel.class, new DailyBalanceModelSerializer())
-                .register(DailyBalanceDataSource.class, new DailyBalanceDataSourceSerializer())
+                .register(DailyBalanceDatasource.class, new DailyBalanceDataSourceSerializer())
                 .build();
         loader = YamlConfigFactory.loader(new File(MewEconomy.plugin.getDataFolder(), fileName + fileExt));
         try {
@@ -35,9 +35,9 @@ public class DailyBalanceFileHandler extends FileStorageHandler<DailyBalanceData
     }
 
     @Override
-    protected DailyBalanceDataSource readFromFile(Path path) {
+    protected DailyBalanceDatasource readFromFile(Path path) {
         try {
-            return root.get(DailyBalanceDataSource.class);
+            return root.get(DailyBalanceDatasource.class);
         } catch (ConfigurateException e) {
             e.printStackTrace();
             return null;
@@ -45,7 +45,7 @@ public class DailyBalanceFileHandler extends FileStorageHandler<DailyBalanceData
     }
 
     @Override
-    protected void saveToFile(Path path, DailyBalanceDataSource dataSource) {
+    protected void saveToFile(Path path, DailyBalanceDatasource dataSource) {
         try {
             loader.save(root.set(dataSource));
         } catch (ConfigurateException e) {

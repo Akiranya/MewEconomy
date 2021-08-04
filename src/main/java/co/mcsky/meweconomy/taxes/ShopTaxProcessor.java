@@ -4,6 +4,7 @@ import co.mcsky.moecore.MoeCore;
 import com.Acrobot.ChestShop.Configuration.Properties;
 import com.Acrobot.ChestShop.Events.Economy.CurrencyTransferEvent;
 import me.lucko.helper.Events;
+import me.lucko.helper.profiles.OfflineModeProfiles;
 import me.lucko.helper.terminable.TerminableConsumer;
 import me.lucko.helper.terminable.module.TerminableModule;
 import org.bukkit.event.EventPriority;
@@ -22,7 +23,7 @@ public class ShopTaxProcessor implements TerminableModule {
     private final UUID adminShopUUID;
 
     public ShopTaxProcessor() {
-        this.adminShopUUID = MoeCore.computeOfflinePlayerUUID(Properties.ADMIN_SHOP_NAME);
+        this.adminShopUUID = OfflineModeProfiles.getUniqueId(Properties.ADMIN_SHOP_NAME);
     }
 
     @Override

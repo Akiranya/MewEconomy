@@ -1,7 +1,7 @@
 package co.mcsky.meweconomy;
 
 import co.aikar.commands.PaperCommandManager;
-import co.mcsky.meweconomy.daily.DailyBalanceDataSource;
+import co.mcsky.meweconomy.daily.DailyBalanceDatasource;
 import co.mcsky.meweconomy.daily.DailyBalanceFileHandler;
 import co.mcsky.meweconomy.daily.DailyBalanceProcessor;
 import co.mcsky.meweconomy.limit.OpenHoursProcessor;
@@ -27,8 +27,13 @@ public class MewEconomy extends ExtendedJavaPlugin {
     private Economy eco;
 
     private DailyBalanceFileHandler dailyBalanceFileHandler;
-    private DailyBalanceDataSource dailyBalanceDataSource;
+    private DailyBalanceDatasource dailyBalanceDatasource;
     private RiceManager riceManager;
+
+    public static double round(double value) {
+        double scale = Math.pow(10, MewEconomy.plugin.config.decimal_round);
+        return Math.round(value * scale) / scale;
+    }
 
     @Override
     protected void enable() {
@@ -36,7 +41,7 @@ public class MewEconomy extends ExtendedJavaPlugin {
 
         // load vault services
         try {
-            this.eco = Services.load(Economy.class);
+            eco = Services.load(Economy.class);
         } catch (IllegalStateException e) {
             getLogger().severe(e.getMessage());
             getLogger().severe("Some vault registration is not present");
@@ -44,27 +49,24 @@ public class MewEconomy extends ExtendedJavaPlugin {
             return;
         }
 
-        this.config = new MewEconomyConfig();
-        this.config.load();
-        this.config.save();
+        config = new MewEconomyConfig();
+        config.load();
+        config.save();
 
         // load data source from file
         dailyBalanceFileHandler = new DailyBalanceFileHandler();
-        dailyBalanceDataSource = dailyBalanceFileHandler.load().orElseGet(() -> {
-            getLogger().warning("Data file does not exist, creating new instance");
-            return new DailyBalanceDataSource();
-        });
+        dailyBalanceDatasource = dailyBalanceFileHandler.load().orElseGet(DailyBalanceDatasource::new);
 
         // schedule task to save data periodically
         Schedulers.async().runRepeating(() -> {
-            dailyBalanceFileHandler.save(dailyBalanceDataSource);
+            dailyBalanceFileHandler.save(dailyBalanceDatasource);
             getLogger().info("Data source saved successfully!");
-        }, 0, TimeUnit.SECONDS, this.config.save_interval, TimeUnit.SECONDS).bindWith(this);
+        }, 0, TimeUnit.SECONDS, config.save_interval, TimeUnit.SECONDS).bindWith(this);
 
         // register modules
         bindModule(new ShopTaxProcessor());
         bindModule(new OpenHoursProcessor());
-        bindModule(new DailyBalanceProcessor(dailyBalanceDataSource));
+        bindModule(new DailyBalanceProcessor(dailyBalanceDatasource));
         riceManager = bindModule(new RiceManager());
 
         loadLanguages();
@@ -75,7 +77,7 @@ public class MewEconomy extends ExtendedJavaPlugin {
     protected void disable() {
         // save data source into file
         if (dailyBalanceFileHandler != null)
-            dailyBalanceFileHandler.save(dailyBalanceDataSource);
+            dailyBalanceFileHandler.save(dailyBalanceDatasource);
     }
 
     public boolean isDebugMode() {
@@ -84,7 +86,7 @@ public class MewEconomy extends ExtendedJavaPlugin {
 
     public void registerCommands() {
         PaperCommandManager commands = new PaperCommandManager(this);
-        commands.registerCommand(new MewEconomyCommands(commands, dailyBalanceDataSource, riceManager));
+        commands.registerCommand(new MewEconomyCommands(commands, dailyBalanceDatasource, riceManager));
     }
 
     public void loadLanguages() {
@@ -99,8 +101,14 @@ public class MewEconomy extends ExtendedJavaPlugin {
         });
     }
 
+    public void saveDatasource() {
+        dailyBalanceFileHandler.save(dailyBalanceDatasource);
+    }
+
     public void reload() {
-        // TODO can reload data source
+        MewEconomy.plugin.loadLanguages();
+        MewEconomy.plugin.config.load();
+        dailyBalanceDatasource = dailyBalanceFileHandler.load().orElseGet(DailyBalanceDatasource::new);
     }
 
     public Economy economy() {
@@ -123,7 +131,7 @@ public class MewEconomy extends ExtendedJavaPlugin {
         return getMessage(plugin.getServer().getConsoleSender(), key, replacements);
     }
 
-    public DailyBalanceDataSource getDailyBalanceDataSource() {
-        return dailyBalanceDataSource;
+    public DailyBalanceDatasource getDailyBalanceDatasource() {
+        return dailyBalanceDatasource;
     }
 }
