@@ -70,9 +70,8 @@ public class DailyBalanceProcessor implements TerminableModule {
                         case BUY -> {
                             double increment = price * MewEconomy.plugin.config.daily_balance_buy_percent / 100D;
                             model.incrementDailyBalance(increment); // increment daily balance
-
-                            // adds cooldown to not send messages too often
                             if (MewEconomy.plugin.config.daily_balance_remind_full && model.isDailyBalanceFull()) {
+                                // adds cooldown to not send messages too often
                                 if (messageReminderCooldown.test(player)) {
                                     player.sendMessage(MewEconomy.plugin.getMessage(player, "chat.reach-daily-balance"));
                                 }
