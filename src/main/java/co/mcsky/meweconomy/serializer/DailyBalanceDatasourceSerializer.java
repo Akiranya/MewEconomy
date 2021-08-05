@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class DailyBalanceDataSourceSerializer implements TypeSerializer<DailyBalanceDatasource> {
+public class DailyBalanceDatasourceSerializer implements TypeSerializer<DailyBalanceDatasource> {
 
     @Override
     public DailyBalanceDatasource deserialize(Type type, ConfigurationNode node) throws SerializationException {
@@ -23,11 +23,10 @@ public class DailyBalanceDataSourceSerializer implements TypeSerializer<DailyBal
     }
 
     @Override
-    public void serialize(Type type, @Nullable DailyBalanceDatasource dataSource, ConfigurationNode node) throws
+    public void serialize(Type type, @Nullable DailyBalanceDatasource datasource, ConfigurationNode node) throws
             SerializationException {
-        Objects.requireNonNull(dataSource, "dataSource");
-        node.node("version").set(1);
-        node.node("players").setList(DailyBalanceModel.class, dataSource.getPlayerModels());
+        Objects.requireNonNull(datasource, "datasource");
+        node.node("players").setList(DailyBalanceModel.class, datasource.getPlayerModels());
     }
 
 }

@@ -46,7 +46,7 @@ public class ShopTaxProcessor implements TerminableModule {
                             tax = amountSent * (plugin.config.admin_shop_buy_tax_percent / 100D);
                             MoeCore.plugin.systemAccount().depositSystem(tax);
 
-                            if (plugin.isDebugMode()) {
+                            if (plugin.debugMode()) {
                                 plugin.getLogger().info("System account received: %s".formatted(tax));
                             }
                         }
@@ -59,7 +59,7 @@ public class ShopTaxProcessor implements TerminableModule {
                         MoeCore.plugin.systemAccount().depositSystem(tax);
                     }
 
-                    if (plugin.isDebugMode()) {
+                    if (plugin.debugMode()) {
                         plugin.getLogger().info("Admin shop UUID: %s".formatted(adminShopUUID));
                         plugin.getLogger().info("System account received: %s".formatted(tax));
                         plugin.getLogger().info("AmountSent: %s".formatted(e.getAmountSent()));

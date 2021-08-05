@@ -54,7 +54,7 @@ public class MewEconomy extends ExtendedJavaPlugin {
         config.save();
 
         // load data source from file
-        dailyBalanceFileHandler = new DailyBalanceFileHandler();
+        dailyBalanceFileHandler = new DailyBalanceFileHandler(getDataFolder());
         dailyBalanceDatasource = dailyBalanceFileHandler.load().orElseGet(DailyBalanceDatasource::new);
 
         // schedule task to save data periodically
@@ -75,12 +75,12 @@ public class MewEconomy extends ExtendedJavaPlugin {
 
     @Override
     protected void disable() {
-        // save data source into file
-        if (dailyBalanceFileHandler != null)
+        if (dailyBalanceFileHandler != null) {
             dailyBalanceFileHandler.save(dailyBalanceDatasource);
+        }
     }
 
-    public boolean isDebugMode() {
+    public boolean debugMode() {
         return config.debug;
     }
 
@@ -101,21 +101,26 @@ public class MewEconomy extends ExtendedJavaPlugin {
         });
     }
 
+    public void loadDatasource() {
+        // TODO async loads
+        dailyBalanceDatasource = dailyBalanceFileHandler.load().orElseGet(DailyBalanceDatasource::new);
+    }
+
     public void saveDatasource() {
+        // TODO async saves
         dailyBalanceFileHandler.save(dailyBalanceDatasource);
     }
 
     public void reload() {
         MewEconomy.plugin.loadLanguages();
         MewEconomy.plugin.config.load();
-        dailyBalanceDatasource = dailyBalanceFileHandler.load().orElseGet(DailyBalanceDatasource::new);
     }
 
     public Economy economy() {
         return eco;
     }
 
-    public String getMessage(CommandSender sender, String key, Object... replacements) {
+    public String message(CommandSender sender, String key, Object... replacements) {
         if (replacements.length == 0) {
             return lang.getConfig(sender).get(key);
         } else {
@@ -127,8 +132,8 @@ public class MewEconomy extends ExtendedJavaPlugin {
         }
     }
 
-    public String getMessage(String key, Object... replacements) {
-        return getMessage(plugin.getServer().getConsoleSender(), key, replacements);
+    public String message(String key, Object... replacements) {
+        return message(plugin.getServer().getConsoleSender(), key, replacements);
     }
 
     public DailyBalanceDatasource getDailyBalanceDatasource() {

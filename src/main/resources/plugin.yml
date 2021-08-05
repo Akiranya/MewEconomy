@@ -3,6 +3,5 @@ main: co.mcsky.meweconomy.MewEconomy
 version: ${version}
 api-version: 1.13
 author: Nailm
-prefix: MewEconomy
 website: https://mimaru.me
 depend: [ MoeCore, Vault, helper, Essentials, Towny, ChestShop ]

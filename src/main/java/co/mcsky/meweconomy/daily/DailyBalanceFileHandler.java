@@ -1,13 +1,13 @@
 package co.mcsky.meweconomy.daily;
 
-import co.mcsky.meweconomy.MewEconomy;
-import co.mcsky.meweconomy.serializer.DailyBalanceDataSourceSerializer;
+import co.mcsky.meweconomy.serializer.DailyBalanceDatasourceSerializer;
 import co.mcsky.meweconomy.serializer.DailyBalanceModelSerializer;
 import co.mcsky.moecore.config.YamlConfigFactory;
 import me.lucko.helper.serialize.FileStorageHandler;
 import org.spongepowered.configurate.CommentedConfigurationNode;
 import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.serialize.TypeSerializerCollection;
+import org.spongepowered.configurate.yaml.NodeStyle;
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 
 import java.io.File;
@@ -20,15 +20,20 @@ public class DailyBalanceFileHandler extends FileStorageHandler<DailyBalanceData
     private final YamlConfigurationLoader loader;
     private CommentedConfigurationNode root;
 
-    public DailyBalanceFileHandler() {
-        super(fileName, fileExt, MewEconomy.plugin.getDataFolder());
-        TypeSerializerCollection s = YamlConfigFactory.typeSerializers().childBuilder()
+    public DailyBalanceFileHandler(File dataFolder) {
+        super(fileName, fileExt, dataFolder);
+        TypeSerializerCollection serializers = YamlConfigFactory.typeSerializers().childBuilder()
+                .register(DailyBalanceDatasource.class, new DailyBalanceDatasourceSerializer())
                 .register(DailyBalanceModel.class, new DailyBalanceModelSerializer())
-                .register(DailyBalanceDatasource.class, new DailyBalanceDataSourceSerializer())
                 .build();
-        loader = YamlConfigFactory.loader(new File(MewEconomy.plugin.getDataFolder(), fileName + fileExt));
+        loader = YamlConfigurationLoader.builder()
+                .file(new File(dataFolder, fileName + fileExt))
+                .defaultOptions(opt -> opt.serializers(serializers))
+                .nodeStyle(NodeStyle.BLOCK)
+                .indent(2)
+                .build();
         try {
-            root = loader.load(loader.defaultOptions().serializers(s));
+            root = loader.load();
         } catch (ConfigurateException e) {
             e.printStackTrace();
         }
@@ -37,7 +42,7 @@ public class DailyBalanceFileHandler extends FileStorageHandler<DailyBalanceData
     @Override
     protected DailyBalanceDatasource readFromFile(Path path) {
         try {
-            return root.get(DailyBalanceDatasource.class);
+            return (root = loader.load()).get(DailyBalanceDatasource.class);
         } catch (ConfigurateException e) {
             e.printStackTrace();
             return null;

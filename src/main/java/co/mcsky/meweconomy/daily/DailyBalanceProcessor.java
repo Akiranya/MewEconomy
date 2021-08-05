@@ -33,7 +33,7 @@ public class DailyBalanceProcessor implements TerminableModule {
                 .filter(e -> !dataSource.hasPlayerModel(e.getPlayer().getUniqueId()))
                 .handler(e -> {
                     dataSource.addPlayerModel(new DailyBalanceModel(e.getPlayer().getUniqueId()));
-                    if (MewEconomy.plugin.isDebugMode()) {
+                    if (MewEconomy.plugin.debugMode()) {
                         MewEconomy.plugin.getLogger().info("Adding player model to data source: %s".formatted(e.getPlayer().getName()));
                     }
                 }).bindWith(consumer);
@@ -57,8 +57,8 @@ public class DailyBalanceProcessor implements TerminableModule {
                     final Player player = e.getClient();
                     final DailyBalanceModel model = dataSource.getPlayerModel(player.getUniqueId());
                     if (model.getCooldown().test()) {
-                        model.resetDailyBalance();
-                        if (MewEconomy.plugin.isDebugMode()) {
+                        model.resetBalance();
+                        if (MewEconomy.plugin.debugMode()) {
                             MewEconomy.plugin.getLogger().info("Player %s's daily balance reset".formatted(player.getName()));
                         }
                     }
@@ -69,22 +69,22 @@ public class DailyBalanceProcessor implements TerminableModule {
                     switch (e.getTransactionType()) {
                         case BUY -> {
                             double increment = price * MewEconomy.plugin.config.daily_balance_buy_percent / 100D;
-                            model.incrementDailyBalance(increment); // increment daily balance
-                            if (MewEconomy.plugin.config.daily_balance_remind_full && model.isDailyBalanceFull()) {
+                            model.incrementBalance(increment); // increment daily balance
+                            if (MewEconomy.plugin.config.daily_balance_remind_full && model.isBalanceFull()) {
                                 // adds cooldown to not send messages too often
                                 if (messageReminderCooldown.test(player)) {
-                                    player.sendMessage(MewEconomy.plugin.getMessage(player, "chat.reach-daily-balance"));
+                                    player.sendMessage(MewEconomy.plugin.message(player, "chat.reach-daily-balance"));
                                 }
                             }
                         }
                         case SELL -> {
                             if (model.getDailyBalance() < price) {
                                 e.setCancelled(PreTransactionEvent.TransactionOutcome.OTHER);
-                                player.sendMessage(MewEconomy.plugin.getMessage(player, "chat.insufficient-daily-balance",
+                                player.sendMessage(MewEconomy.plugin.message(player, "chat.insufficient-daily-balance",
                                         "required_amount", price, "daily_balance", model.getDailyBalance()));
                                 return;
                             }
-                            model.incrementDailyBalance(-price); // decrement daily balance
+                            model.incrementBalance(-price); // decrement daily balance
                         }
                     }
                 }).bindWith(consumer);

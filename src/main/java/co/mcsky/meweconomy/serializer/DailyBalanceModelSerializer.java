@@ -9,7 +9,6 @@ import org.spongepowered.configurate.serialize.SerializationException;
 import org.spongepowered.configurate.serialize.TypeSerializer;
 
 import java.lang.reflect.Type;
-import java.util.Objects;
 import java.util.UUID;
 
 public class DailyBalanceModelSerializer implements TypeSerializer<DailyBalanceModel> {
@@ -27,9 +26,9 @@ public class DailyBalanceModelSerializer implements TypeSerializer<DailyBalanceM
 
     @Override
     public void serialize(Type type, @Nullable DailyBalanceModel obj, ConfigurationNode node) throws SerializationException {
-        Objects.requireNonNull(obj, "obj");
+        Preconditions.checkNotNull(obj, "obj");
 
-        node.node("uuid").set(UUID.class, obj.getPlayerUUID());
+        node.node("uuid").set(obj.getPlayerUUID());
         node.node("daily-balance").set(obj.getDailyBalance());
         node.node("cooldown").set(obj.getCooldown());
     }

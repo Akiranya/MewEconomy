@@ -9,7 +9,6 @@ import co.mcsky.meweconomy.daily.DailyBalanceModel;
 import co.mcsky.meweconomy.rice.RiceManager;
 import co.mcsky.moecore.MoeCore;
 import me.lucko.helper.Schedulers;
-import me.lucko.helper.promise.Promise;
 import me.lucko.helper.utils.Players;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -17,9 +16,8 @@ import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 
 @CommandAlias("meco|meweconomy")
 public class MewEconomyCommands extends BaseCommand {
@@ -64,7 +62,7 @@ public class MewEconomyCommands extends BaseCommand {
 
     @Subcommand("bal|balance")
     public void balance(CommandSender sender) {
-        sender.sendMessage(MewEconomy.plugin.getMessage("command.system-balance.view",
+        sender.sendMessage(MewEconomy.plugin.message("command.system-balance.view",
                 "balance", MewEconomy.round(MoeCore.plugin.systemAccount().getBalance())));
     }
 
@@ -72,34 +70,40 @@ public class MewEconomyCommands extends BaseCommand {
         Players.get(player.getUniqueId()).ifPresent(p -> p.sendMessage(message));
     }
 
-    @Subcommand("take")
-    @CommandPermission("meweconomy.admin")
-    @CommandCompletion("@players @nothing")
-    @Description("Take money from player and deposit it to system account")
-    @Syntax("<player> <amount>")
-    public void take(CommandSender sender, OfflinePlayer player, double amount) {
-        double playerBalance = MewEconomy.plugin.economy().getBalance(player);
-        double withdraw = Math.min(playerBalance, amount);
-        if (MoeCore.plugin.systemAccount().withdrawToSystem(player, withdraw)) {
-            sender.sendMessage(MewEconomy.plugin.getMessage(sender, "command.system-balance.take.sender-success", "amount", withdraw));
-            sendMessageOnline(player, MewEconomy.plugin.getMessage("command.system-balance.take.receiver-success", "amount", withdraw));
-        } else {
-            sender.sendMessage(MewEconomy.plugin.getMessage(sender, "command.system-balance.take.failed"));
-        }
-    }
-
-    @Subcommand("save")
+    @Subcommand("db save")
     @CommandPermission("meweconomy.admin")
     public void saveDatasource(CommandSender sender) {
         MewEconomy.plugin.saveDatasource();
-        sender.sendMessage(MewEconomy.plugin.getMessage(sender, "command.datasource-saved"));
+        sender.sendMessage(MewEconomy.plugin.message(sender, "command.datasource-saved"));
+    }
+
+    @Subcommand("db load")
+    @CommandPermission("meweconomy.admin")
+    public void loadDatasource(CommandSender sender) {
+        MewEconomy.plugin.loadDatasource();
+        sender.sendMessage(MewEconomy.plugin.message(sender, "command.datasource-loaded"));
     }
 
     @Subcommand("reload")
     @CommandPermission("meweconomy.admin")
     public void reload(CommandSender sender) {
         MewEconomy.plugin.reload();
-        sender.sendMessage(MewEconomy.plugin.getMessage(sender, "command.plugin-reloaded"));
+        sender.sendMessage(MewEconomy.plugin.message(sender, "command.plugin-reloaded"));
+    }
+
+    @Subcommand("take")
+    @CommandPermission("meweconomy.admin")
+    @CommandCompletion("@players @nothing")
+    @Syntax("<player> <amount>")
+    public void take(CommandSender sender, OfflinePlayer player, double amount) {
+        double playerBalance = MewEconomy.plugin.economy().getBalance(player);
+        double withdraw = Math.min(playerBalance, amount);
+        if (MoeCore.plugin.systemAccount().withdrawToSystem(player, withdraw)) {
+            sender.sendMessage(MewEconomy.plugin.message(sender, "command.system-balance.take.sender-success", "amount", withdraw));
+            sendMessageOnline(player, MewEconomy.plugin.message("command.system-balance.take.receiver-success", "amount", withdraw));
+        } else {
+            sender.sendMessage(MewEconomy.plugin.message(sender, "command.system-balance.take.failed"));
+        }
     }
 
     @Subcommand("day|daily")
@@ -107,73 +111,69 @@ public class MewEconomyCommands extends BaseCommand {
 
         @Default
         public void balance(Player player) {
-            player.sendMessage(MewEconomy.plugin.getMessage(player, "command.daily-balance.view",
+            player.sendMessage(MewEconomy.plugin.message(player, "command.daily-balance.view",
                     "balance", MewEconomy.round(dataSource.getPlayerModel(player.getUniqueId()).getDailyBalance())));
-            player.sendMessage(MewEconomy.plugin.getMessage(player, "command.daily-balance.time",
+            player.sendMessage(MewEconomy.plugin.message(player, "command.daily-balance.time",
                     "time", dataSource.getPlayerModel(player.getUniqueId()).getCooldown().remainingTime(TimeUnit.HOURS)));
         }
 
-        @Subcommand("add")
-        @CommandCompletion("@players @nothing")
-        @Syntax("<player> <amount>")
-        public void add(CommandSender sender, String playerName, double amount) {
+        @Subcommand("view")
+        @Syntax("<player>")
+        @CommandPermission("meweconomy.admin")
+        public void view(CommandSender sender, OfflinePlayer player) {
+            sender.sendMessage(MewEconomy.plugin.message(sender, "command.daily-balance.view-others",
+                    "player", player.getName(), "balance", dataSource.getPlayerModel(player.getUniqueId())));
+        }
+
+        private void updateByName(CommandSender sender, String playerName, double amount, Consumer<OfflinePlayer> promptCallback) {
+            // its just a convenient method to not repeat code in add() and take() below
             final OfflinePlayer player = Bukkit.getOfflinePlayerIfCached(playerName);
             if (player == null) {
-                try {
-                    Schedulers.async().run(() -> {
-                        final OfflinePlayer fetchedPlayer = Bukkit.getOfflinePlayer(playerName);
-                        sender.sendMessage("Fetching the UUID of name %s ...".formatted(playerName));
-                        dataSource.getPlayerModel(fetchedPlayer).incrementDailyBalance(amount);
-                        sender.sendMessage(MewEconomy.plugin.getMessage(sender, "command.daily-balance.add", "amount", amount, "player", fetchedPlayer.getName()));
-                    }).get(5, TimeUnit.SECONDS);
-                } catch (InterruptedException | ExecutionException | TimeoutException e) {
-                    sender.sendMessage(e.getLocalizedMessage());
-                }
+                Schedulers.async().run(() -> {
+                    MewEconomy.plugin.getLogger().info("Fetching the UUID of name %s ...".formatted(playerName));
+                    final OfflinePlayer fetchedPlayer = Bukkit.getOfflinePlayer(playerName);
+                    if (!fetchedPlayer.hasPlayedBefore()) {
+                        sender.sendMessage(MewEconomy.plugin.message(sender, "command.daily-balance.player-dose-not-exist"));
+                        return;
+                    }
+                    dataSource.getPlayerModel(fetchedPlayer).incrementBalance(amount);
+                    promptCallback.accept(fetchedPlayer);
+                });
             } else {
                 final DailyBalanceModel playerModel = dataSource.getPlayerModel(player);
-                playerModel.incrementDailyBalance(amount);
-                sender.sendMessage(MewEconomy.plugin.getMessage(sender, "command.daily-balance.add", "amount", amount, "player", player.getName()));
+                playerModel.incrementBalance(amount);
+                promptCallback.accept(player);
             }
         }
 
+        @Subcommand("add")
+        @CommandPermission("meweconomy.admin")
+        @CommandCompletion("@players @nothing")
+        @Syntax("<player> <amount>")
+        public void add(CommandSender sender, String playerName, double amount) {
+            updateByName(sender, playerName, amount, p -> sender.sendMessage(MewEconomy.plugin.message(sender, "command.daily-balance.add", "amount", amount, "player", p.getName())));
+        }
+
         @Subcommand("take")
+        @CommandPermission("meweconomy.admin")
         @CommandCompletion("@players @nothing")
         @Syntax("<player> <amount>")
         public void take(CommandSender sender, String playerName, double amount) {
-            final OfflinePlayer player = Bukkit.getOfflinePlayerIfCached(playerName);
-            if (player == null) {
-                try {
-                    Promise.start().thenApplyAsync(e -> {
-                        final OfflinePlayer fetchedPlayer = Bukkit.getOfflinePlayer(playerName);
-                        sender.sendMessage("Fetching the UUID of name %s ...".formatted(playerName));
-                        dataSource.getPlayerModel(fetchedPlayer).incrementDailyBalance(-amount);
-                        return fetchedPlayer;
-                    }).thenAcceptSync(p -> {
-                        sender.sendMessage(MewEconomy.plugin.getMessage(sender, "command.daily-balance.take", "amount", amount, "player", p.getName()));
-                    }).get(5, TimeUnit.SECONDS);
-                } catch (InterruptedException | ExecutionException | TimeoutException e) {
-                    sender.sendMessage(e.getLocalizedMessage());
-                }
-            } else {
-                final DailyBalanceModel playerModel = dataSource.getPlayerModel(player);
-                playerModel.incrementDailyBalance(-amount);
-                sender.sendMessage(MewEconomy.plugin.getMessage(sender, "command.daily-balance.take", "amount", amount, "player", player.getName()));
-            }
+            updateByName(sender, playerName, -amount, p -> sender.sendMessage(MewEconomy.plugin.message(sender, "command.daily-balance.take", "amount", amount, "player", p.getName())));
         }
 
     }
 
     @Subcommand("give")
     @CommandPermission("meweconomy.admin")
-    @Description("Take money from the system account and deposit it to player")
     public class GiveCommand extends BaseCommand {
 
         private void depositFromSystem(CommandSender sender, OfflinePlayer player, double withdraw) {
             if (MoeCore.plugin.systemAccount().depositFromSystem(player, withdraw)) {
-                sender.sendMessage(MewEconomy.plugin.getMessage(sender, "command.system-balance.give.sender-success", "amount", MewEconomy.round(withdraw)));
-                sendMessageOnline(player, MewEconomy.plugin.getMessage("command.system-balance.give.receiver-success", "amount", MewEconomy.round(withdraw)));
+                sender.sendMessage(MewEconomy.plugin.message(sender, "command.system-balance.give.sender-success", "amount", MewEconomy.round(withdraw)));
+                sendMessageOnline(player, MewEconomy.plugin.message("command.system-balance.give.receiver-success", "amount", MewEconomy.round(withdraw)));
             } else {
-                sender.sendMessage(MewEconomy.plugin.getMessage(sender, "command.system-balance.give.failed"));
+                sender.sendMessage(MewEconomy.plugin.message(sender, "command.system-balance.give.failed"));
             }
         }
 

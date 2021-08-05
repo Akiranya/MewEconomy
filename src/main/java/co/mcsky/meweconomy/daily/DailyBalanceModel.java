@@ -39,20 +39,20 @@ public class DailyBalanceModel {
         return dailyBalance;
     }
 
-    public void setDailyBalance(double newBalance) {
+    public void setBalance(double newBalance) {
         dailyBalance = Math.min(MewEconomy.plugin.config.daily_balance, newBalance);
     }
 
-    public boolean isDailyBalanceFull() {
+    public boolean isBalanceFull() {
         return dailyBalance >= MewEconomy.plugin.config.daily_balance;
     }
 
-    public void incrementDailyBalance(double amount) {
+    public void incrementBalance(double amount) {
         dailyBalance += amount;
         dailyBalance = Math.min(MewEconomy.plugin.config.daily_balance, Math.max(0D, dailyBalance)); // integrity check
     }
 
-    public void resetDailyBalance() {
+    public void resetBalance() {
         dailyBalance = MewEconomy.plugin.config.daily_balance;
     }
 
