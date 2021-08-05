@@ -78,7 +78,7 @@ dependencies {
     compileOnly('net.ess3:EssentialsX:2.18.2') { transitive = false }
 
     // moecore
-    compileOnly('com.github.Akiranya:MoeCore:master-SNAPSHOT')
+    compileOnly('com.github.Akiranya:MoeCore:0.2')
 }
 
 test {
