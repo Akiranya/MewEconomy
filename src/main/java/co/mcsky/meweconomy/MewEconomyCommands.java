@@ -70,21 +70,21 @@ public class MewEconomyCommands extends BaseCommand {
         Players.get(player.getUniqueId()).ifPresent(p -> p.sendMessage(message));
     }
 
-    @Subcommand("db save")
+    @Subcommand("datasource save")
     @CommandPermission("meweconomy.admin")
     public void saveDatasource(CommandSender sender) {
         MewEconomy.plugin.saveDatasource();
         sender.sendMessage(MewEconomy.plugin.message(sender, "command.datasource-saved"));
     }
 
-    @Subcommand("db load")
+    @Subcommand("datasource load")
     @CommandPermission("meweconomy.admin")
     public void loadDatasource(CommandSender sender) {
         MewEconomy.plugin.loadDatasource();
         sender.sendMessage(MewEconomy.plugin.message(sender, "command.datasource-loaded"));
     }
 
-    @Subcommand("reload")
+    @Subcommand("reloadconfig")
     @CommandPermission("meweconomy.admin")
     public void reload(CommandSender sender) {
         MewEconomy.plugin.reload();

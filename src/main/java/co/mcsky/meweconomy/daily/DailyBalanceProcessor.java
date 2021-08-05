@@ -18,11 +18,9 @@ import java.util.concurrent.TimeUnit;
 
 public class DailyBalanceProcessor implements TerminableModule {
 
-    private final DailyBalanceDatasource dataSource;
     private final CooldownMap<Player> messageReminderCooldown;
 
-    public DailyBalanceProcessor(DailyBalanceDatasource dataSource) {
-        this.dataSource = dataSource;
+    public DailyBalanceProcessor() {
         this.messageReminderCooldown = CooldownMap.create(Cooldown.of(3, TimeUnit.SECONDS));
     }
 
@@ -30,9 +28,9 @@ public class DailyBalanceProcessor implements TerminableModule {
     public void setup(@NotNull TerminableConsumer consumer) {
         /* Add data to data source when new player joins */
         Events.subscribe(PlayerJoinEvent.class)
-                .filter(e -> !dataSource.hasPlayerModel(e.getPlayer().getUniqueId()))
+                .filter(e -> !MewEconomy.plugin.getDailyDatasource().hasPlayerModel(e.getPlayer().getUniqueId()))
                 .handler(e -> {
-                    dataSource.addPlayerModel(new DailyBalanceModel(e.getPlayer().getUniqueId()));
+                    MewEconomy.plugin.getDailyDatasource().addPlayerModel(new DailyBalanceModel(e.getPlayer().getUniqueId()));
                     if (MewEconomy.plugin.debugMode()) {
                         MewEconomy.plugin.getLogger().info("Adding player model to data source: %s".formatted(e.getPlayer().getName()));
                     }
@@ -55,7 +53,7 @@ public class DailyBalanceProcessor implements TerminableModule {
                 .filter(e -> ChestShopSign.isAdminShop(e.getSign())) // only handle admin shops
                 .handler(e -> {
                     final Player player = e.getClient();
-                    final DailyBalanceModel model = dataSource.getPlayerModel(player.getUniqueId());
+                    final DailyBalanceModel model = MewEconomy.plugin.getDailyDatasource().getPlayerModel(player.getUniqueId());
                     if (model.getCooldown().test()) {
                         model.resetBalance();
                         if (MewEconomy.plugin.debugMode()) {

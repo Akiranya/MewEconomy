@@ -20,10 +20,9 @@ import java.util.concurrent.TimeUnit;
 public class MewEconomy extends ExtendedJavaPlugin {
 
     public static MewEconomy plugin;
-
     public MewEconomyConfig config;
-    public LanguageManager lang;
 
+    private LanguageManager lang;
     private Economy eco;
 
     private DailyBalanceFileHandler dailyBalanceFileHandler;
@@ -59,14 +58,14 @@ public class MewEconomy extends ExtendedJavaPlugin {
 
         // schedule task to save data periodically
         Schedulers.async().runRepeating(() -> {
-            dailyBalanceFileHandler.save(dailyBalanceDatasource);
+            dailyBalanceFileHandler.save(getDailyDatasource());
             getLogger().info("Data source saved successfully!");
         }, 0, TimeUnit.SECONDS, config.save_interval, TimeUnit.SECONDS).bindWith(this);
 
         // register modules
         bindModule(new ShopTaxProcessor());
         bindModule(new OpenHoursProcessor());
-        bindModule(new DailyBalanceProcessor(dailyBalanceDatasource));
+        bindModule(new DailyBalanceProcessor());
         riceManager = bindModule(new RiceManager());
 
         loadLanguages();
@@ -120,6 +119,10 @@ public class MewEconomy extends ExtendedJavaPlugin {
         return eco;
     }
 
+    public DailyBalanceDatasource getDailyDatasource() {
+        return dailyBalanceDatasource;
+    }
+
     public String message(CommandSender sender, String key, Object... replacements) {
         if (replacements.length == 0) {
             return lang.getConfig(sender).get(key);
@@ -134,9 +137,5 @@ public class MewEconomy extends ExtendedJavaPlugin {
 
     public String message(String key, Object... replacements) {
         return message(plugin.getServer().getConsoleSender(), key, replacements);
-    }
-
-    public DailyBalanceDatasource getDailyBalanceDatasource() {
-        return dailyBalanceDatasource;
     }
 }
