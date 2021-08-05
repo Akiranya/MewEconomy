@@ -30,7 +30,7 @@ public class MewEconomy extends ExtendedJavaPlugin {
     private RiceManager riceManager;
 
     public static double round(double value) {
-        double scale = Math.pow(10, MewEconomy.plugin.config.decimal_round);
+        double scale = Math.pow(10, Math.max(1, MewEconomy.plugin.config.decimal_round + 1));
         return Math.round(value * scale) / scale;
     }
 
@@ -85,7 +85,7 @@ public class MewEconomy extends ExtendedJavaPlugin {
 
     public void registerCommands() {
         PaperCommandManager commands = new PaperCommandManager(this);
-        commands.registerCommand(new MewEconomyCommands(commands, dailyBalanceDatasource, riceManager));
+        commands.registerCommand(new MewEconomyCommands(commands));
     }
 
     public void loadLanguages() {
@@ -117,6 +117,10 @@ public class MewEconomy extends ExtendedJavaPlugin {
 
     public Economy economy() {
         return eco;
+    }
+
+    public RiceManager getRiceManager() {
+        return riceManager;
     }
 
     public DailyBalanceDatasource getDailyDatasource() {

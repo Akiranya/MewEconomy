@@ -10,6 +10,9 @@ import com.earth2me.essentials.commands.WarpNotFoundException;
 import com.earth2me.essentials.utils.NumberUtil;
 import com.earth2me.essentials.utils.StringUtil;
 import me.lucko.helper.Events;
+import me.lucko.helper.metadata.Empty;
+import me.lucko.helper.metadata.Metadata;
+import me.lucko.helper.metadata.MetadataKey;
 import me.lucko.helper.terminable.TerminableConsumer;
 import me.lucko.helper.terminable.module.TerminableModule;
 import net.ess3.api.InvalidWorldException;
@@ -87,14 +90,21 @@ public class RiceManager implements TerminableModule {
         // 如果玩家是会员
         // 在加入游戏时需要向共享权限组添加传送点的权限
         // 在退出游戏时从共享权限组中移除传送点的权限
+        final MetadataKey<Empty> vip = MetadataKey.createEmptyKey("vip");
         Events.subscribe(PlayerJoinEvent.class)
                 .filter(e -> plugin.config.vip_enabled)
                 .filter(e -> isPlayerVip(e.getPlayer()))
-                .handler(e -> addSharedWarpPermission(e.getPlayer().getName().toLowerCase()))
+                .handler(e -> {
+                    // 如果玩家是米团，给他添加一个 metadata
+                    // 这样的话，如果玩家在线途中米团权限过期，我们仍能够
+                    // 正确的把他的传送点权限取消
+                    Metadata.provideForPlayer(e.getPlayer()).put(vip, Empty.instance());
+                    addSharedWarpPermission(e.getPlayer().getName().toLowerCase());
+                })
                 .bindWith(consumer);
         Events.subscribe(PlayerQuitEvent.class)
                 .filter(e -> plugin.config.vip_enabled)
-                .filter(e -> isPlayerVip(e.getPlayer()))
+                .filter(e -> Metadata.provideForPlayer(e.getPlayer()).has(vip))
                 .handler(e -> removeSharedWarpPermission(e.getPlayer().getName().toLowerCase()))
                 .bindWith(consumer);
     }

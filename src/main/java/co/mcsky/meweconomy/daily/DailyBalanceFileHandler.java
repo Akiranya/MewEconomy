@@ -32,11 +32,6 @@ public class DailyBalanceFileHandler extends FileStorageHandler<DailyBalanceData
                 .nodeStyle(NodeStyle.BLOCK)
                 .indent(2)
                 .build();
-        try {
-            root = loader.load();
-        } catch (ConfigurateException e) {
-            e.printStackTrace();
-        }
     }
 
     @Override
