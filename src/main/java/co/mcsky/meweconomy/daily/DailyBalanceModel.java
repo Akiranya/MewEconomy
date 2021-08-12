@@ -64,4 +64,13 @@ public class DailyBalanceModel {
         this.cooldown = cooldown;
     }
 
+    public void testResetBalance() {
+        if (getCooldown().test()) {
+            resetBalance();
+            if (MewEconomy.plugin.debugMode()) {
+                MewEconomy.plugin.getLogger().info("Player %s's daily balance reset".formatted(playerUUID));
+            }
+        }
+    }
+
 }

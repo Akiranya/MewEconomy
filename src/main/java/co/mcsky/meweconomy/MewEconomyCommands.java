@@ -106,10 +106,10 @@ public class MewEconomyCommands extends BaseCommand {
 
         @Default
         public void balance(Player player) {
-            player.sendMessage(MewEconomy.plugin.message(player, "command.daily-balance.view",
-                    "balance", MewEconomy.round(MewEconomy.plugin.getDailyDatasource().getPlayerModel(player.getUniqueId()).getDailyBalance())));
-            player.sendMessage(MewEconomy.plugin.message(player, "command.daily-balance.time",
-                    "time", MewEconomy.plugin.getDailyDatasource().getPlayerModel(player.getUniqueId()).getCooldown().remainingTime(TimeUnit.HOURS)));
+            final DailyBalanceModel model = MewEconomy.plugin.getDailyDatasource().getPlayerModel(player.getUniqueId());
+            model.testResetBalance();
+            player.sendMessage(MewEconomy.plugin.message(player, "command.daily-balance.view", "balance", MewEconomy.round(model.getDailyBalance())));
+            player.sendMessage(MewEconomy.plugin.message(player, "command.daily-balance.time", "time", model.getCooldown().remainingTime(TimeUnit.HOURS)));
         }
 
         @Subcommand("view")

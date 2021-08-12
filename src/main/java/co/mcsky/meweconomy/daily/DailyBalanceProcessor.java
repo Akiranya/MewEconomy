@@ -54,12 +54,7 @@ public class DailyBalanceProcessor implements TerminableModule {
                 .handler(e -> {
                     final Player player = e.getClient();
                     final DailyBalanceModel model = MewEconomy.plugin.getDailyDatasource().getPlayerModel(player.getUniqueId());
-                    if (model.getCooldown().test()) {
-                        model.resetBalance();
-                        if (MewEconomy.plugin.debugMode()) {
-                            MewEconomy.plugin.getLogger().info("Player %s's daily balance reset".formatted(player.getName()));
-                        }
-                    }
+                    model.testResetBalance();
 
                     // the price on the admin shop
                     final double price = e.getExactPrice().doubleValue();
