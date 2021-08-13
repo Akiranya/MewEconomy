@@ -17,7 +17,7 @@ import org.bukkit.entity.Player;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-@SuppressWarnings("unused")
+@SuppressWarnings("ALL")
 @CommandAlias("meco|meweconomy")
 public class MewEconomyCommands extends BaseCommand {
 
@@ -57,12 +57,7 @@ public class MewEconomyCommands extends BaseCommand {
 
     @Subcommand("bal|balance")
     public void balance(CommandSender sender) {
-        sender.sendMessage(MewEconomy.plugin.message("command.system-balance.view",
-                "balance", MewEconomy.round(MoeCore.plugin.systemAccount().getBalance())));
-    }
-
-    private void sendMessageOnline(OfflinePlayer player, String message) {
-        Players.get(player.getUniqueId()).ifPresent(p -> p.sendMessage(message));
+        sender.sendMessage(MewEconomy.plugin.message("command.system-balance.view", "balance", MewEconomy.round(MoeCore.plugin.systemAccount().getBalance())));
     }
 
     @Subcommand("datasource save")
@@ -101,6 +96,39 @@ public class MewEconomyCommands extends BaseCommand {
         }
     }
 
+    @Subcommand("give percent")
+    @CommandPermission("meweconomy.admin")
+    @CommandCompletion("@players @nothing")
+    @Syntax("<player> <percent(0-100)>")
+    public void percent(CommandSender sender, OfflinePlayer player, @Conditions("limits:min=0,max=100") double percent) {
+        double balance = MoeCore.plugin.systemAccount().getBalance();
+        double withdraw = Math.min(balance, balance * percent / 100D);
+        depositFromSystem(sender, player, withdraw);
+    }
+
+    @Subcommand("give decimal")
+    @CommandPermission("meweconomy.admin")
+    @CommandCompletion("@players @nothing")
+    @Syntax("<player> <amount>")
+    public void decimal(CommandSender sender, OfflinePlayer player, @Conditions("limits:min=0") double amount) {
+        double balance = MoeCore.plugin.systemAccount().getBalance();
+        double withdraw = Math.min(balance, amount);
+        depositFromSystem(sender, player, withdraw);
+    }
+
+    private void sendMessageOnline(OfflinePlayer player, String message) {
+        Players.get(player.getUniqueId()).ifPresent(p -> p.sendMessage(message));
+    }
+
+    private void depositFromSystem(CommandSender sender, OfflinePlayer player, double withdraw) {
+        if (MoeCore.plugin.systemAccount().depositFromSystem(player, withdraw)) {
+            sender.sendMessage(MewEconomy.plugin.message(sender, "command.system-balance.give.sender-success", "amount", MewEconomy.round(withdraw)));
+            sendMessageOnline(player, MewEconomy.plugin.message("command.system-balance.give.receiver-success", "amount", MewEconomy.round(withdraw)));
+        } else {
+            sender.sendMessage(MewEconomy.plugin.message(sender, "command.system-balance.give.failed"));
+        }
+    }
+
     @Subcommand("day|daily")
     public class DailyBalanceCommand extends BaseCommand {
 
@@ -113,11 +141,12 @@ public class MewEconomyCommands extends BaseCommand {
         }
 
         @Subcommand("view")
-        @Syntax("<player>")
         @CommandPermission("meweconomy.admin")
+        @CommandCompletion("@players")
+        @Syntax("<player>")
         public void view(CommandSender sender, OfflinePlayer player) {
-            sender.sendMessage(MewEconomy.plugin.message(sender, "command.daily-balance.view-others",
-                    "player", player.getName(), "balance", MewEconomy.round(MewEconomy.plugin.getDailyDatasource().getPlayerModel(player.getUniqueId()).getDailyBalance())));
+            final DailyBalanceModel model = MewEconomy.plugin.getDailyDatasource().getPlayerModel(player.getUniqueId());
+            sender.sendMessage(MewEconomy.plugin.message(sender, "command.daily-balance.view-others", "player", player.getName(), "balance", MewEconomy.round(model.getDailyBalance())));
         }
 
         @Subcommand("add")
@@ -159,37 +188,5 @@ public class MewEconomyCommands extends BaseCommand {
 
     }
 
-    @Subcommand("give")
-    @CommandPermission("meweconomy.admin")
-    public class GiveCommand extends BaseCommand {
 
-        private void depositFromSystem(CommandSender sender, OfflinePlayer player, double withdraw) {
-            if (MoeCore.plugin.systemAccount().depositFromSystem(player, withdraw)) {
-                sender.sendMessage(MewEconomy.plugin.message(sender, "command.system-balance.give.sender-success", "amount", MewEconomy.round(withdraw)));
-                sendMessageOnline(player, MewEconomy.plugin.message("command.system-balance.give.receiver-success", "amount", MewEconomy.round(withdraw)));
-            } else {
-                sender.sendMessage(MewEconomy.plugin.message(sender, "command.system-balance.give.failed"));
-            }
-        }
-
-        @Subcommand("percent")
-        @CommandCompletion("@players @nothing")
-        @Syntax("<player> <percent(0-100)>")
-        public void percent(CommandSender sender, OfflinePlayer player, @Conditions("limits:min=0,max=100") double percent) {
-            double balance = MoeCore.plugin.systemAccount().getBalance();
-            double withdraw = Math.min(balance, balance * percent / 100D);
-            depositFromSystem(sender, player, withdraw);
-        }
-
-        @Subcommand("decimal")
-        @CommandCompletion("@players @nothing")
-        @Syntax("<player> <amount>")
-        public void decimal(CommandSender sender, OfflinePlayer player, @Conditions("limits:min=0") double amount) {
-            double balance = MoeCore.plugin.systemAccount().getBalance();
-            double withdraw = Math.min(balance, amount);
-            depositFromSystem(sender, player, withdraw);
-        }
-
-
-    }
 }

@@ -59,7 +59,7 @@ public class MewEconomy extends ExtendedJavaPlugin {
         // schedule task to save data periodically
         Schedulers.async().runRepeating(() -> {
             dailyBalanceFileHandler.save(getDailyDatasource());
-            getLogger().info("Data source saved successfully!");
+            getLogger().info("Datasource saved successfully!");
         }, 0, TimeUnit.SECONDS, config.save_interval, TimeUnit.SECONDS).bindWith(this);
 
         // register modules
