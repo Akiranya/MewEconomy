@@ -4,7 +4,7 @@ import co.aikar.commands.PaperCommandManager;
 import co.mcsky.meweconomy.daily.DailyBalanceDatasource;
 import co.mcsky.meweconomy.daily.DailyBalanceFileHandler;
 import co.mcsky.meweconomy.daily.DailyBalanceProcessor;
-import co.mcsky.meweconomy.limit.OpenHoursProcessor;
+import co.mcsky.meweconomy.requisition.RequisitionBus;
 import co.mcsky.meweconomy.rice.RiceManager;
 import co.mcsky.meweconomy.taxes.ShopTaxProcessor;
 import de.themoep.utils.lang.bukkit.LanguageManager;
@@ -64,8 +64,8 @@ public class MewEconomy extends ExtendedJavaPlugin {
 
         // register modules
         bindModule(new ShopTaxProcessor());
-        bindModule(new OpenHoursProcessor());
         bindModule(new DailyBalanceProcessor());
+        bindModule(new RequisitionBus());
         riceManager = bindModule(new RiceManager());
 
         loadLanguages();
@@ -85,7 +85,13 @@ public class MewEconomy extends ExtendedJavaPlugin {
 
     public void registerCommands() {
         PaperCommandManager commands = new PaperCommandManager(this);
-        commands.registerCommand(new MewEconomyCommands(commands));
+
+        // replacements have to be added here
+        commands.getCommandReplacements().addReplacement("%main", "meco");
+        commands.getCommandReplacements().addReplacement("%req", "req");
+
+        // then initialize the command entry (each command is initialized inside)
+        new MewEconomyCommands(commands);
     }
 
     public void loadLanguages() {
@@ -101,12 +107,10 @@ public class MewEconomy extends ExtendedJavaPlugin {
     }
 
     public void loadDatasource() {
-        // TODO async loads
         dailyBalanceDatasource = dailyBalanceFileHandler.load().orElseGet(DailyBalanceDatasource::new);
     }
 
     public void saveDatasource() {
-        // TODO async saves
         dailyBalanceFileHandler.save(dailyBalanceDatasource);
     }
 
@@ -133,7 +137,11 @@ public class MewEconomy extends ExtendedJavaPlugin {
         } else {
             String[] list = new String[replacements.length];
             for (int i = 0; i < replacements.length; i++) {
-                list[i] = replacements[i].toString();
+                if (replacements[i] instanceof Double n) {
+                    list[i] = Double.toString(round(n));
+                } else {
+                    list[i] = replacements[i].toString();
+                }
             }
             return lang.getConfig(sender).get(key, list);
         }

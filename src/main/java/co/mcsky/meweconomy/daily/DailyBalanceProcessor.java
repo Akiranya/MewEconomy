@@ -73,7 +73,7 @@ public class DailyBalanceProcessor implements TerminableModule {
                             if (model.getDailyBalance() < price) {
                                 e.setCancelled(PreTransactionEvent.TransactionOutcome.OTHER);
                                 player.sendMessage(MewEconomy.plugin.message(player, "chat.insufficient-daily-balance",
-                                        "required_amount", MewEconomy.round(price), "daily_balance", MewEconomy.round(model.getDailyBalance())));
+                                        "required_amount", price, "daily_balance", MewEconomy.round(model.getDailyBalance())));
                                 return;
                             }
                             model.incrementBalance(-price); // decrement daily balance

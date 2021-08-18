@@ -46,7 +46,7 @@ public class RiceManager implements TerminableModule {
      */
     public void setWarpCommand(Player p, String name) {
         if (NumberUtil.isInt(name)) {
-            p.sendMessage(MewEconomy.plugin.message(p, "command.setwarp.invalid-name", "name", name));
+            p.sendMessage(MewEconomy.plugin.message(p, "command.mituan.setwarp.invalid-name", "name", name));
             return;
         }
 
@@ -65,7 +65,7 @@ public class RiceManager implements TerminableModule {
                 final Instant expireInstant = expiryDate.toInstant();
                 final Instant now = Instant.now();
                 final long l = Duration.between(now, expireInstant).toHours();
-                p.sendMessage(plugin.message(p, "command.setwarp.cooldown", "remaining", l));
+                p.sendMessage(plugin.message(p, "command.mituan.setwarp.cooldown", "remaining", l));
                 return;
             }
             try {
@@ -74,14 +74,14 @@ public class RiceManager implements TerminableModule {
                 // send success message
                 final Date expiresAt = Date.from(Instant.now().plus(plugin.config.vip_set_warp_cooldown, ChronoUnit.MILLIS));
                 iu.addCommandCooldown(Pattern.compile("^setwarp"), expiresAt, true);
-                p.sendMessage(plugin.message(p, "command.setwarp.success", "name", name, "location", ACFBukkitUtil.blockLocationToString(p.getLocation())));
+                p.sendMessage(plugin.message(p, "command.mituan.setwarp.success", "name", name, "location", ACFBukkitUtil.blockLocationToString(p.getLocation())));
 
                 // add shared permission
                 addSharedWarpPermission(name);
             } catch (Exception ignored) {
             }
         } else {
-            p.sendMessage(plugin.message(p, "command.setwarp.overwrite"));
+            p.sendMessage(plugin.message(p, "command.mituan.setwarp.overwrite"));
         }
     }
 
