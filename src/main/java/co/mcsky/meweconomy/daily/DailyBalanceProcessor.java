@@ -37,16 +37,15 @@ public class DailyBalanceProcessor implements TerminableModule {
                 }).bindWith(consumer);
 
         /* add checks when creating admin shop, unifying all admin shop owner name. */
-        Events.subscribe(PreShopCreationEvent.class)
-                .handler(e -> {
-                    if (ChestShopSign.isAdminShop(e.getSign())) {
-                        String line = e.getSign().line(0).toString();
-                        String adminShopName = Properties.ADMIN_SHOP_NAME;
-                        if (!line.equals(adminShopName)) {
-                            e.setSignLine((byte) 0, adminShopName);
-                        }
-                    }
-                }).bindWith(consumer);
+        Events.subscribe(PreShopCreationEvent.class).handler(e -> {
+            if (ChestShopSign.isAdminShop(e.getSign())) {
+                String line = e.getSign().line(0).toString();
+                String adminShopName = Properties.ADMIN_SHOP_NAME;
+                if (!line.equals(adminShopName)) {
+                    e.setSignLine((byte) 0, adminShopName);
+                }
+            }
+        }).bindWith(consumer);
 
         /* listen to admin transactions to control daily balance */
         Events.subscribe(PreTransactionEvent.class)
