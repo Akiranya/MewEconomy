@@ -1,9 +1,14 @@
 package co.mcsky.meweconomy.requisition;
 
 import co.mcsky.meweconomy.MewEconomy;
+import co.mcsky.meweconomy.requisition.event.RequisitionEndEvent;
+import co.mcsky.meweconomy.requisition.event.RequisitionSellEvent;
+import co.mcsky.meweconomy.requisition.event.RequisitionStartEvent;
 import me.lucko.helper.Events;
 import me.lucko.helper.Schedulers;
+import me.lucko.helper.terminable.Terminable;
 import me.lucko.helper.terminable.TerminableConsumer;
+import me.lucko.helper.terminable.composite.CompositeTerminable;
 import me.lucko.helper.terminable.module.TerminableModule;
 import me.lucko.helper.utils.Players;
 import net.kyori.adventure.text.Component;
@@ -12,7 +17,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
-import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.NotNull;
@@ -21,39 +25,22 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import java.util.logging.Level;
 
 /**
  * Manages the lifetime of requisition.
  */
-public class RequisitionBus implements TerminableModule {
+public enum RequisitionBus implements Terminable, TerminableConsumer {
 
-    private static Requisition currentRequisition;
-    private static int taskId;
+    INSTANCE;
 
-    public static void startRequisition(Requisition req) {
-        currentRequisition = req;
-        taskId = Schedulers.sync().runRepeating(new RequisitionTask(req), 1, 20).getBukkitId();
-        broadcast(Component.text(MewEconomy.plugin.message("command.requisition.req-init"))
-                .replaceText(builder -> builder.matchLiteral("{player}").replacement(currentRequisition.getBuyer().displayName()))
-                .replaceText(builder -> builder.matchLiteral("{item}").replacement(currentRequisition.getReqItem().displayName()))
-                .replaceText(builder -> builder.matchLiteral("{amount}").replacement(Component.text(currentRequisition.getRemains())))
-                .replaceText(builder -> builder.matchLiteral("{unit_price}").replacement(Component.text(currentRequisition.getUnitPrice()).color(NamedTextColor.LIGHT_PURPLE)))
-                .replaceText(builder -> builder.matchLiteral("{remaining_time}").replacement(Component.text(currentRequisition.getDuration()))));
-    }
+    // manages the termination of current requisition
+    private final CompositeTerminable terminableRegistry = CompositeTerminable.create();
 
-    public static void stopRequisition() {
-        currentRequisition = null;
-        Schedulers.bukkit().cancelTask(taskId);
-        broadcast(MewEconomy.plugin.message("command.requisition.stop"));
-    }
+    private Requisition currentRequisition;
+    private int requisitionTaskId;
 
-    public static Requisition currentRequisition() {
-        return currentRequisition;
-    }
-
-    public static boolean hasRequisition() {
-        return currentRequisition != null;
+    RequisitionBus() {
+        bindModule(new RequisitionListener());
     }
 
     public static void broadcast(String message) {
@@ -61,11 +48,38 @@ public class RequisitionBus implements TerminableModule {
     }
 
     public static void broadcast(Component message) {
-        // TODO limit broadcast freq
         Bukkit.broadcast(Component.text(MewEconomy.plugin.message("command.requisition.prefix")).append(message));
     }
 
-    public static void giveItem(OfflinePlayer player, ItemStack itemStack) {
+    public void startRequisition(Requisition req) {
+        if (Events.callAndReturn(new RequisitionStartEvent(req)).isCancelled())
+            return;
+
+        currentRequisition = bindModule(req);
+        requisitionTaskId = Schedulers.sync().runRepeating(new RequisitionTask(req), 1, 20).getBukkitId();
+    }
+
+    public void stopRequisition() {
+        // no need to stop if there is nothing
+        if (!hasRequisition()) return;
+
+        Events.call(new RequisitionEndEvent(currentRequisition));
+
+        currentRequisition = null;
+        terminableRegistry.closeAndReportException();
+        terminableRegistry.cleanup();
+        Schedulers.bukkit().cancelTask(requisitionTaskId);
+    }
+
+    public Requisition currentRequisition() {
+        return currentRequisition;
+    }
+
+    public boolean hasRequisition() {
+        return currentRequisition != null;
+    }
+
+    public void giveItem(OfflinePlayer player, ItemStack itemStack) {
         final Optional<Player> opt = Players.get(player.getUniqueId());
         if (opt.isPresent()) {
             final Player p = opt.get();
@@ -86,7 +100,7 @@ public class RequisitionBus implements TerminableModule {
      * @param test the item
      * @return true if the test item is equivalent to this item
      */
-    public static boolean matched(ItemStack test) {
+    public boolean matched(ItemStack test) {
         // TODO better implementation?
         return currentRequisition.getReqItem().isSimilar(test);
     }
@@ -97,97 +111,86 @@ public class RequisitionBus implements TerminableModule {
      * @param seller     the seller
      * @param itemToSell the item to sell
      */
-    public static void onSell(Player seller, ItemStack itemToSell) {
+    public void onSell(Player seller, ItemStack itemToSell) {
+
+        // check conditions
 
         // there is no running requisition
-        if (!hasRequisition()) {
+        if (!RequisitionBus.INSTANCE.hasRequisition()) {
             seller.sendMessage(MewEconomy.plugin.message(seller, "command.requisition.seller.no-requisition"));
             return;
         }
 
         // the item to be sold does not match
-        if (!matched(itemToSell)) {
+        if (!RequisitionBus.INSTANCE.matched(itemToSell)) {
             seller.sendMessage(MewEconomy.plugin.message(seller, "command.requisition.seller.invalid-item"));
             return;
         }
 
         // oversold
-        int remains = currentRequisition().getRemains();
+        int remains = RequisitionBus.INSTANCE.currentRequisition().getRemains();
         if (itemToSell.getAmount() > remains) {
             seller.sendMessage(Component.text(MewEconomy.plugin.message(seller, "command.requisition.seller.oversold"))
-                    .replaceText(b -> b.matchLiteral("{needed}").replacement(
-                            Component.text(currentRequisition.getRemains())
-                                    .append(Component.text("x").color(NamedTextColor.GRAY))
-                                    .append(currentRequisition.getReqItem().displayName())))
+                    .replaceText(b -> b.matchLiteral("{needed}").replacement(Component.text(currentRequisition.getRemains())))
                     .replaceText(b -> b.matchLiteral("{actual_amount}").replacement(Component.text(itemToSell.getAmount()))));
             return;
         }
 
-        // buyer cant afford the items
+        if (Events.callAndReturn(new RequisitionSellEvent(currentRequisition, seller, itemToSell)).isCancelled()) {
+            return;
+        }
+
+        // --- 1. process the seller side ---
+
+        // remove certain amount of items from the seller's main hand
+        ItemStack sellerMainHandItem = seller.getInventory().getItemInMainHand();
+        sellerMainHandItem.setAmount(Math.max(sellerMainHandItem.getAmount() - itemToSell.getAmount(), 0));
+        if (sellerMainHandItem.getAmount() == 0) {
+            seller.getInventory().setItemInMainHand(null); // prevent bugs
+        } else {
+            seller.getInventory().setItemInMainHand(sellerMainHandItem);
+        }
+        // calculates the price of this transaction
         final double price = itemToSell.getAmount() * currentRequisition().getUnitPrice();
-        if (!MewEconomy.plugin.economy().has(currentRequisition().getBuyer(), price)) {
-            seller.sendMessage(MewEconomy.plugin.message(seller, "command.requisition.seller.insufficient-fund"));
-            return;
-        }
-
-        // all check passed, process the trade //
-
-        final ItemStack backup = seller.getInventory().getItemInMainHand().clone();
-        final ItemStack sellerHandItemCopy = seller.getInventory().getItemInMainHand().clone();
-
-        try {
-            sellerHandItemCopy.setAmount(Math.max(sellerHandItemCopy.getAmount() - itemToSell.getAmount(), 0));
-
-            // remove certain amount of items from the seller's main hand
-            if (sellerHandItemCopy.getAmount() == 0) {
-                seller.getInventory().setItemInMainHand(null); // prevent bugs
-            } else {
-                seller.getInventory().setItemInMainHand(sellerHandItemCopy);
-            }
-
-        } catch (Exception e) {
-            MewEconomy.plugin.getLogger().log(Level.SEVERE, "Error selling item: ", e);
-            seller.getInventory().setItemInMainHand(backup); // rollback
-            return;
-        }
-
         // give money to the seller
         MewEconomy.plugin.economy().depositPlayer(seller, price);
 
-        // give item to the buyer
+        // --- 2. process the buyer side ---
+
+        // give items to the buyer
         giveItem(currentRequisition().getBuyer(), itemToSell);
+        // take money from the buyer
         MewEconomy.plugin.economy().withdrawPlayer(currentRequisition().getBuyer(), price);
 
-        // update requisition state: increment amount sold
+        // --- 3. update requisition information ---
+
         currentRequisition().incrementAmountSold(itemToSell.getAmount());
-
-        broadcast(Component.text(MewEconomy.plugin.message(seller, "command.requisition.sell"))
-                .replaceText(builder -> builder.matchLiteral("{player}").replacement(seller.displayName()))
-                .replaceText(builder -> builder.matchLiteral("{item}").replacement(currentRequisition.getReqItem().displayName()))
-                .replaceText(builder -> builder.matchLiteral("{amount}").replacement(Component.text(itemToSell.getAmount())))
-                .replaceText(builder -> builder.matchLiteral("{remains}").replacement(Component.text(currentRequisition.getRemains()).color(NamedTextColor.RED))));
-
-        // halt the requisition if amount sold is enough
         if (currentRequisition.getRemains() <= 0) {
-            stopRequisition();
+            stopRequisition(); // halt the requisition if amount sold is enough
         }
     }
 
+    @NotNull
     @Override
-    public void setup(@NotNull TerminableConsumer consumer) {
-        // update buyer's location if logging out for the purpose of dropping items
-        Events.subscribe(PlayerQuitEvent.class)
-                .filter(e -> currentRequisition() != null)
-                .filter(e -> e.getPlayer().equals(currentRequisition().getBuyer()))
-                .handler(e -> currentRequisition().setBuyerLocation(e.getPlayer().getLocation()))
-                .bindWith(consumer);
+    public <T extends AutoCloseable> T bind(@NotNull T terminable) {
+        return terminableRegistry.bind(terminable);
+    }
 
+    @NotNull
+    @Override
+    public <T extends TerminableModule> T bindModule(@NotNull T module) {
+        return terminableRegistry.bindModule(module);
+    }
+
+    @Override
+    public void close() {
+        stopRequisition();
     }
 
     /**
-     * This task must be scheduled to run EVERY second.
+     * Caveat: this task must be scheduled to run EVERY second.
      */
-    private static class RequisitionTask extends BukkitRunnable {
+    private class RequisitionTask extends BukkitRunnable {
 
         private final Requisition requisition;
         private final Set<Integer> broadcastTimes;
@@ -206,7 +209,6 @@ public class RequisitionBus implements TerminableModule {
                     stopRequisition();
                     return;
                 }
-
                 if (broadcastTimes.contains(--remainingSeconds)) {
                     // broadcast requisition at certain times
                     broadcast(MewEconomy.plugin.message("command.requisition.remaining", "time", remainingSeconds));
@@ -219,7 +221,6 @@ public class RequisitionBus implements TerminableModule {
                             .replaceText(builder -> builder.matchLiteral("{unit_price}").replacement(Component.text(requisition.getUnitPrice()).color(NamedTextColor.LIGHT_PURPLE)))
                             .replaceText(builder -> builder.matchLiteral("{remains}").replacement(Component.text(requisition.getRemains()).color(NamedTextColor.RED))));
                 }
-
             } catch (Exception e) {
                 e.printStackTrace();
                 stopRequisition();

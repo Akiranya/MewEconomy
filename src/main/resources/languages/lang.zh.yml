@@ -38,11 +38,12 @@ command:
       already-running: "&c当前已经有一个正在进行中的征购, 请稍后再试."
       illegal-shulker-box: "&c不支持装了东西的潜影盒."
     seller:
+      too-fast: "&c你卖得太快了! 请慢一点."
       no-requisition: "&c当前没有正在进行中的征购."
       invalid-item: "&c手上物品与征购物品不匹配."
       insufficient-fund: "&c买家余额不足."
       insufficient-amount: "&c物品数量不足."
-      oversold: "&c出售征购数量超过上限, 只需要 {needed} &c但你卖了 {actual_amount} &c个"
+      oversold: "&c出售征购数量超过上限, 只需要 {needed} 个 &c但你卖了 {actual_amount} &c个"
 chat:
   insufficient-daily-balance: "&e交易失败...需要 {required_amount} 你现拥有每日系统资金 {daily_balance} 软妹币 ∑(ﾟДﾟ)"
   reach-daily-balance: "&e提示: 你的每日系统商店资金已满, 继续购买不会增加你的每日系统资金"

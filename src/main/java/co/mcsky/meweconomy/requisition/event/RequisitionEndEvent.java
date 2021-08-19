@@ -1,17 +1,17 @@
-package co.mcsky.meweconomy.requisition;
+package co.mcsky.meweconomy.requisition.event;
 
-import org.bukkit.entity.Player;
+import co.mcsky.meweconomy.requisition.Requisition;
+import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
-import org.bukkit.event.player.PlayerEvent;
 import org.jetbrains.annotations.NotNull;
 
-public class RequisitionSellEvent extends PlayerEvent {
+public class RequisitionEndEvent extends Event {
 
     public static final HandlerList handlers = new HandlerList();
+
     private final Requisition requisition;
 
-    public RequisitionSellEvent(@NotNull Player seller, Requisition requisition) {
-        super(seller);
+    public RequisitionEndEvent(Requisition requisition) {
         this.requisition = requisition;
     }
 

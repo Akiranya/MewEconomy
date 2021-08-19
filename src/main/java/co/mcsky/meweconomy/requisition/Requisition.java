@@ -1,12 +1,17 @@
 package co.mcsky.meweconomy.requisition;
 
 import co.mcsky.meweconomy.MewEconomy;
+import me.lucko.helper.Events;
+import me.lucko.helper.terminable.TerminableConsumer;
+import me.lucko.helper.terminable.module.TerminableModule;
 import org.bukkit.Location;
 import org.bukkit.block.ShulkerBox;
 import org.bukkit.entity.Player;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.jetbrains.annotations.NotNull;
 
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.TimeUnit;
@@ -14,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Represents the state of a requisition.
  */
-public class Requisition {
+public class Requisition implements TerminableModule {
 
     // duration of the requisition in second
     private final int duration;
@@ -106,4 +111,14 @@ public class Requisition {
             }
         }
     }
+
+    @Override
+    public void setup(@NotNull TerminableConsumer consumer) {
+        // update buyer's location if logging out for the purpose of dropping items
+        Events.subscribe(PlayerQuitEvent.class)
+                .filter(e -> getBuyer().getUniqueId().equals(e.getPlayer().getUniqueId()))
+                .handler(e -> setBuyerLocation(e.getPlayer().getLocation()))
+                .bindWith(consumer);
+    }
+
 }

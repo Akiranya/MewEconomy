@@ -20,7 +20,7 @@ public class RequisitionCommand extends BaseCommand {
     public void requisite(Player buyer, int amount, double unitPrice, @Optional String itemName) {
 
         // stop if there is already a running requisition
-        if (RequisitionBus.hasRequisition()) {
+        if (RequisitionBus.INSTANCE.hasRequisition()) {
             buyer.sendMessage(MewEconomy.plugin.message(buyer, "command.requisition.buyer.already-running"));
             return;
         }
@@ -43,7 +43,7 @@ public class RequisitionCommand extends BaseCommand {
         }
 
         itemInMainHand = itemInMainHand.clone();
-        RequisitionBus.startRequisition(new Requisition(buyer, itemInMainHand, amount, unitPrice));
+        RequisitionBus.INSTANCE.startRequisition(new Requisition(buyer, itemInMainHand, amount, unitPrice));
     }
 
     @Subcommand("sell")
@@ -83,6 +83,6 @@ public class RequisitionCommand extends BaseCommand {
         }
 
         ItemStack clone = itemInMainHand.clone().asQuantity(amountToSell);
-        RequisitionBus.onSell(seller, clone);
+        RequisitionBus.INSTANCE.onSell(seller, clone);
     }
 }
