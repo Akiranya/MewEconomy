@@ -3,6 +3,7 @@ package co.mcsky.meweconomy.command;
 import co.aikar.commands.BaseCommand;
 import co.aikar.commands.annotation.*;
 import co.mcsky.meweconomy.MewEconomy;
+import co.mcsky.meweconomy.requisition.EndReason;
 import co.mcsky.meweconomy.requisition.Requisition;
 import co.mcsky.meweconomy.requisition.RequisitionBus;
 import org.bukkit.Material;
@@ -11,6 +12,21 @@ import org.bukkit.inventory.ItemStack;
 
 @CommandAlias("%main")
 public class RequisitionCommand extends BaseCommand {
+
+    @Subcommand("req cancel")
+    @CommandPermission("meco.req")
+    @Syntax("<数量> <单价> [物品名]")
+    public void cancel(Player player) {
+        if (!RequisitionBus.INSTANCE.hasRequisition()) {
+            RequisitionBus.sendMessage(player, MewEconomy.plugin.message("command.requisition.seller.no-requisition"));
+            return;
+        }
+        if (player.hasPermission("meco.admin") || player.getUniqueId().equals(RequisitionBus.INSTANCE.currentRequisition().getBuyer().getUniqueId())) {
+            RequisitionBus.INSTANCE.stopRequisition(EndReason.CANCEL);
+        } else {
+            RequisitionBus.sendMessage(player, MewEconomy.plugin.message(player, "command.requisition.cancel-failed"));
+        }
+    }
 
     @Subcommand("req")
     @CommandAlias("req")
@@ -21,7 +37,7 @@ public class RequisitionCommand extends BaseCommand {
 
         // stop if there is already a running requisition
         if (RequisitionBus.INSTANCE.hasRequisition()) {
-            buyer.sendMessage(MewEconomy.plugin.message(buyer, "command.requisition.buyer.already-running"));
+            RequisitionBus.sendMessage(buyer, MewEconomy.plugin.message("command.requisition.buyer.already-running"));
             return;
         }
 
@@ -33,14 +49,14 @@ public class RequisitionCommand extends BaseCommand {
         if (itemName != null && !itemName.isEmpty()) {
             Material material = Material.matchMaterial(itemName);
             if (material == null || !material.isItem()) {
-                buyer.sendMessage(MewEconomy.plugin.message(buyer, "command.requisition.invalid-item"));
+                RequisitionBus.sendMessage(buyer, MewEconomy.plugin.message("command.requisition.invalid-item"));
                 return;
             }
             itemInMainHand = new ItemStack(material);
         }
 
         if (itemInMainHand.getType().isAir()) {
-            buyer.sendMessage(MewEconomy.plugin.message(buyer, "command.requisition.no-item"));
+            RequisitionBus.sendMessage(buyer, MewEconomy.plugin.message("command.requisition.no-item"));
             return;
         }
 
@@ -57,7 +73,7 @@ public class RequisitionCommand extends BaseCommand {
 
         // there is no running requisition
         if (!RequisitionBus.INSTANCE.hasRequisition()) {
-            seller.sendMessage(MewEconomy.plugin.message(seller, "command.requisition.seller.no-requisition"));
+            RequisitionBus.sendMessage(seller, MewEconomy.plugin.message("command.requisition.seller.no-requisition"));
             return;
         }
 
@@ -65,7 +81,7 @@ public class RequisitionCommand extends BaseCommand {
 
         ItemStack itemInMainHand = seller.getInventory().getItemInMainHand();
         if (itemInMainHand.getType().isAir()) {
-            seller.sendMessage(MewEconomy.plugin.message(seller, "command.requisition.no-item"));
+            RequisitionBus.sendMessage(seller, MewEconomy.plugin.message("command.requisition.no-item"));
             return;
         }
 
@@ -76,7 +92,7 @@ public class RequisitionCommand extends BaseCommand {
         } else {
             // otherwise, take the specified amount
             if (amount <= 0) {
-                seller.sendMessage(MewEconomy.plugin.message(seller, "command.requisition.invalid-amount"));
+                RequisitionBus.sendMessage(seller, MewEconomy.plugin.message("command.requisition.invalid-amount"));
                 return;
             } else {
                 // seller cant sell more than 64 at a time
@@ -85,7 +101,7 @@ public class RequisitionCommand extends BaseCommand {
         }
 
         if (!seller.getInventory().containsAtLeast(itemInMainHand, amountToSell)) {
-            seller.sendMessage(MewEconomy.plugin.message(seller, "command.requisition.seller.insufficient-amount"));
+            RequisitionBus.sendMessage(seller, MewEconomy.plugin.message(seller, "command.requisition.seller.insufficient-amount"));
             return;
         }
 

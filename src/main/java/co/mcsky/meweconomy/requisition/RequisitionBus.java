@@ -15,6 +15,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -46,6 +47,14 @@ public enum RequisitionBus implements TerminableModule, TerminableConsumer {
         Bukkit.broadcast(Component.text(MewEconomy.plugin.message("command.requisition.prefix")).append(message));
     }
 
+    public static void sendMessage(CommandSender sender, Component message) {
+        sender.sendMessage(Component.text(MewEconomy.plugin.message("command.requisition.prefix")).append(message));
+    }
+
+    public static void sendMessage(CommandSender sender, String message) {
+        sendMessage(sender, Component.text(message));
+    }
+
     public void startRequisition(Requisition req) {
         if (Events.callAndReturn(new RequisitionStartEvent(req)).isCancelled())
             return;
@@ -54,11 +63,11 @@ public enum RequisitionBus implements TerminableModule, TerminableConsumer {
         requisitionTaskId = Schedulers.sync().runRepeating(new RequisitionTask(req), 1, 20).getBukkitId();
     }
 
-    public void stopRequisition() {
+    public void stopRequisition(EndReason reason) {
         // no need to stop if there is nothing
         if (!hasRequisition()) return;
 
-        Events.call(new RequisitionEndEvent(currentRequisition));
+        Events.call(new RequisitionEndEvent(currentRequisition, reason));
 
         currentRequisition = null;
         Schedulers.bukkit().cancelTask(requisitionTaskId);
@@ -145,14 +154,14 @@ public enum RequisitionBus implements TerminableModule, TerminableConsumer {
         // --- 2. process the buyer side ---
 
         // give items to the buyer
-        // caveat: it's NECESSARY to pass a clone of the item because
-        // method addItems() has side-effects on the input items (idk why)
+        // caveat: it's NECESSARY to pass on a clone of the item because
+        // method Inventory#addItem() has side-effects on the input items (idk why)
         giveItem(currentRequisition().getBuyer(), itemToSell.clone());
         // take money from the buyer
         MewEconomy.plugin.economy().withdrawPlayer(currentRequisition().getBuyer(), price);
 
         if (currentRequisition.incrementAmountSold(itemToSell.getAmount()).getRemains() <= 0) {
-            stopRequisition(); // halt the requisition if amount sold is enough
+            stopRequisition(EndReason.AMOUNT_MET); // halt the requisition if amount sold is enough
         }
     }
 
@@ -170,7 +179,7 @@ public enum RequisitionBus implements TerminableModule, TerminableConsumer {
 
     @Override
     public void setup(@NotNull TerminableConsumer consumer) {
-        // this "setup" method allows the plugin to shutdown this requisition bus
+        // this "setup" method allows the plugin to shutdown this requisition bus easily
 
         consumer.bind(requisitionRegistry);
         consumer.bindModule(new RequisitionListener());
@@ -195,7 +204,7 @@ public enum RequisitionBus implements TerminableModule, TerminableConsumer {
         public void run() {
             try {
                 if (requisition.isTimeout()) {
-                    stopRequisition();
+                    stopRequisition(EndReason.TIMEOUT);
                     return;
                 }
                 if (broadcastTimes.contains(--remainingSeconds)) {
@@ -212,7 +221,7 @@ public enum RequisitionBus implements TerminableModule, TerminableConsumer {
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                stopRequisition();
+                stopRequisition(EndReason.ERROR);
             }
         }
 

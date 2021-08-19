@@ -43,14 +43,19 @@ public class RequisitionListener implements TerminableModule {
         Events.subscribe(RequisitionEndEvent.class).handler(e -> {
             // listen to end event
 
-            RequisitionBus.broadcast(MewEconomy.plugin.message("command.requisition.stop"));
+            switch (e.getRequisitionEndReason()) {
+                case AMOUNT_MET -> RequisitionBus.broadcast(MewEconomy.plugin.message("command.requisition.end.done"));
+                case TIMEOUT -> RequisitionBus.broadcast(MewEconomy.plugin.message("command.requisition.end.timeout"));
+                case CANCEL -> RequisitionBus.broadcast(MewEconomy.plugin.message("command.requisition.end.cancel"));
+                case ERROR -> RequisitionBus.broadcast(MewEconomy.plugin.message("command.requisition.end.error"));
+            }
         }).bindWith(consumer);
 
         Events.subscribe(RequisitionSellEvent.class).handler(e -> {
             // listen to sell event
 
             if (!cooldownMap.test(e.getSeller().getUniqueId())) {
-                e.getSeller().sendMessage(MewEconomy.plugin.message(e.getSeller(), "command.requisition.seller.too-fast"));
+                RequisitionBus.sendMessage(e.getSeller(), MewEconomy.plugin.message(e.getSeller(), "command.requisition.seller.too-fast"));
                 e.setCancelled(true);
                 return;
             }

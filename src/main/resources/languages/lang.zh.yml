@@ -31,7 +31,14 @@ command:
     req-update: "&b玩家 {player} &b正在征购 {item}&7x{amount} &b单价: {unit_price} 软妹币 &b还需要 {remains} 个 &b输入 &6/msell [数量]&b 出售物品"
     sell: "&b玩家 {player} &b出售了 &d{item}&7x&e{amount} &b当前还需要 &d{remains} &b个, &b输入 &6/msell <数量>&b 出售物品"
     remaining: "&b剩余 {time} 秒."
+    end:
+      timeout: "&b时间已到, 征购结束."
+      cancel: "&b征购被取消."
+      done: "&b已满足征购数量, 征购结束."
+      error: "&c发生内部错误, 征购强制结束."
     stop: "&b征购结束."
+    cancel: "&b征购已取消."
+    cancel-failed: "&c你没有权限取消别人的征购."
     no-item: "&c你手上没有物品."
     invalid-amount: "&c你输入的数量无效."
     buyer:
