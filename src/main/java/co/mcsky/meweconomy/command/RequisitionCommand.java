@@ -25,6 +25,8 @@ public class RequisitionCommand extends BaseCommand {
             return;
         }
 
+        // start check the command params of buyer side
+
         // if the player is holding an item, requisite the held one.
         // otherwise, use the one specified in the param "itemName".
         ItemStack itemInMainHand = buyer.getInventory().getItemInMainHand();
@@ -53,9 +55,20 @@ public class RequisitionCommand extends BaseCommand {
     @Syntax("<数量>")
     public void sell(Player seller, @Optional Integer amount) {
 
+        // there is no running requisition
+        if (!RequisitionBus.INSTANCE.hasRequisition()) {
+            seller.sendMessage(MewEconomy.plugin.message(seller, "command.requisition.seller.no-requisition"));
+            return;
+        }
+
         // Here we just check command parameters on the seller side
 
         ItemStack itemInMainHand = seller.getInventory().getItemInMainHand();
+        if (itemInMainHand.getType().isAir()) {
+            seller.sendMessage(MewEconomy.plugin.message(seller, "command.requisition.no-item"));
+            return;
+        }
+
         int amountToSell;
         if (amount == null) {
             // if amount not specified, sell whole stack in hand
@@ -67,22 +80,16 @@ public class RequisitionCommand extends BaseCommand {
                 return;
             } else {
                 // seller cant sell more than 64 at a time
-                // TODO over 64?
-                amountToSell = Math.min(amount, 64);
+                amountToSell = amount;
             }
         }
 
-        if (itemInMainHand.getType().isAir()) {
-            seller.sendMessage(MewEconomy.plugin.message(seller, "command.requisition.no-item"));
-            return;
-        }
-
-        if (itemInMainHand.getAmount() < amountToSell) {
+        if (!seller.getInventory().containsAtLeast(itemInMainHand, amountToSell)) {
             seller.sendMessage(MewEconomy.plugin.message(seller, "command.requisition.seller.insufficient-amount"));
             return;
         }
 
-        ItemStack clone = itemInMainHand.clone().asQuantity(amountToSell);
+        ItemStack clone = itemInMainHand.asQuantity(amountToSell); // could be over 64
         RequisitionBus.INSTANCE.onSell(seller, clone);
     }
 }

@@ -59,7 +59,7 @@ public class RequisitionListener implements TerminableModule {
                     .replaceText(builder -> builder.matchLiteral("{player}").replacement(e.getSeller().displayName()))
                     .replaceText(builder -> builder.matchLiteral("{item}").replacement(e.getRequisition().getReqItem().displayName()))
                     .replaceText(builder -> builder.matchLiteral("{amount}").replacement(Component.text(e.getItemToSell().getAmount())))
-                    .replaceText(builder -> builder.matchLiteral("{remains}").replacement(Component.text(e.getRequisition().getRemains()).color(NamedTextColor.RED))));
+                    .replaceText(builder -> builder.matchLiteral("{remains}").replacement(Component.text(e.getRequisition().getRemains(e.getItemToSell().getAmount())).color(NamedTextColor.RED))));
         }).bindWith(consumer);
     }
 }

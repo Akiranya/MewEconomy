@@ -65,7 +65,7 @@ public class MewEconomy extends ExtendedJavaPlugin {
         // register modules
         bindModule(new ShopTaxProcessor());
         bindModule(new DailyBalanceProcessor());
-        bind(RequisitionBus.INSTANCE);
+        bindModule(RequisitionBus.INSTANCE);
         riceManager = bindModule(new RiceManager());
 
         loadLanguages();

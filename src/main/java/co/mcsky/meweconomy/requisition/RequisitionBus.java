@@ -6,7 +6,6 @@ import co.mcsky.meweconomy.requisition.event.RequisitionSellEvent;
 import co.mcsky.meweconomy.requisition.event.RequisitionStartEvent;
 import me.lucko.helper.Events;
 import me.lucko.helper.Schedulers;
-import me.lucko.helper.terminable.Terminable;
 import me.lucko.helper.terminable.TerminableConsumer;
 import me.lucko.helper.terminable.composite.CompositeTerminable;
 import me.lucko.helper.terminable.module.TerminableModule;
@@ -29,19 +28,15 @@ import java.util.Set;
 /**
  * Manages the lifetime of requisition.
  */
-public enum RequisitionBus implements Terminable, TerminableConsumer {
+public enum RequisitionBus implements TerminableModule, TerminableConsumer {
 
     INSTANCE;
 
     // manages the termination of current requisition
-    private final CompositeTerminable terminableRegistry = CompositeTerminable.create();
+    private final CompositeTerminable requisitionRegistry = CompositeTerminable.createWeak();
 
     private Requisition currentRequisition;
     private int requisitionTaskId;
-
-    RequisitionBus() {
-        bindModule(new RequisitionListener());
-    }
 
     public static void broadcast(String message) {
         broadcast(Component.text(message));
@@ -66,9 +61,8 @@ public enum RequisitionBus implements Terminable, TerminableConsumer {
         Events.call(new RequisitionEndEvent(currentRequisition));
 
         currentRequisition = null;
-        terminableRegistry.closeAndReportException();
-        terminableRegistry.cleanup();
         Schedulers.bukkit().cancelTask(requisitionTaskId);
+        requisitionRegistry.closeAndReportException();
     }
 
     public Requisition currentRequisition() {
@@ -83,9 +77,8 @@ public enum RequisitionBus implements Terminable, TerminableConsumer {
         final Optional<Player> opt = Players.get(player.getUniqueId());
         if (opt.isPresent()) {
             final Player p = opt.get();
-            // try to add items to the inventory
+            // try to add items to the inventory (has side-effect on the input item stack)
             final HashMap<Integer, ItemStack> leftover = p.getInventory().addItem(itemStack);
-            // any items cant fit in the inventory will be dropped on the buyer's feet
             leftover.forEach((i, is) -> p.getWorld().dropItemNaturally(p.getLocation(), is));
         } else {
             // if the buyer currently offline, simply drop items on the location where he last logged out
@@ -115,20 +108,20 @@ public enum RequisitionBus implements Terminable, TerminableConsumer {
 
         // check conditions
 
-        // there is no running requisition
-        if (!RequisitionBus.INSTANCE.hasRequisition()) {
-            seller.sendMessage(MewEconomy.plugin.message(seller, "command.requisition.seller.no-requisition"));
+        // self to self
+        if (seller.getUniqueId().equals(currentRequisition.getBuyer().getUniqueId())) {
+            seller.sendMessage(MewEconomy.plugin.message(seller, "command.requisition.seller.sell-to-self"));
             return;
         }
 
         // the item to be sold does not match
-        if (!RequisitionBus.INSTANCE.matched(itemToSell)) {
+        if (!matched(itemToSell)) {
             seller.sendMessage(MewEconomy.plugin.message(seller, "command.requisition.seller.invalid-item"));
             return;
         }
 
         // oversold
-        int remains = RequisitionBus.INSTANCE.currentRequisition().getRemains();
+        int remains = currentRequisition().getRemains();
         if (itemToSell.getAmount() > remains) {
             seller.sendMessage(Component.text(MewEconomy.plugin.message(seller, "command.requisition.seller.oversold"))
                     .replaceText(b -> b.matchLiteral("{needed}").replacement(Component.text(currentRequisition.getRemains())))
@@ -142,14 +135,8 @@ public enum RequisitionBus implements Terminable, TerminableConsumer {
 
         // --- 1. process the seller side ---
 
-        // remove certain amount of items from the seller's main hand
-        ItemStack sellerMainHandItem = seller.getInventory().getItemInMainHand();
-        sellerMainHandItem.setAmount(Math.max(sellerMainHandItem.getAmount() - itemToSell.getAmount(), 0));
-        if (sellerMainHandItem.getAmount() == 0) {
-            seller.getInventory().setItemInMainHand(null); // prevent bugs
-        } else {
-            seller.getInventory().setItemInMainHand(sellerMainHandItem);
-        }
+        // remove certain amount of items from the seller's inventory
+        seller.getInventory().removeItemAnySlot(itemToSell);
         // calculates the price of this transaction
         final double price = itemToSell.getAmount() * currentRequisition().getUnitPrice();
         // give money to the seller
@@ -158,14 +145,13 @@ public enum RequisitionBus implements Terminable, TerminableConsumer {
         // --- 2. process the buyer side ---
 
         // give items to the buyer
-        giveItem(currentRequisition().getBuyer(), itemToSell);
+        // caveat: it's NECESSARY to pass a clone of the item because
+        // method addItems() has side-effects on the input items (idk why)
+        giveItem(currentRequisition().getBuyer(), itemToSell.clone());
         // take money from the buyer
         MewEconomy.plugin.economy().withdrawPlayer(currentRequisition().getBuyer(), price);
 
-        // --- 3. update requisition information ---
-
-        currentRequisition().incrementAmountSold(itemToSell.getAmount());
-        if (currentRequisition.getRemains() <= 0) {
+        if (currentRequisition.incrementAmountSold(itemToSell.getAmount()).getRemains() <= 0) {
             stopRequisition(); // halt the requisition if amount sold is enough
         }
     }
@@ -173,18 +159,21 @@ public enum RequisitionBus implements Terminable, TerminableConsumer {
     @NotNull
     @Override
     public <T extends AutoCloseable> T bind(@NotNull T terminable) {
-        return terminableRegistry.bind(terminable);
+        return requisitionRegistry.bind(terminable);
     }
 
     @NotNull
     @Override
     public <T extends TerminableModule> T bindModule(@NotNull T module) {
-        return terminableRegistry.bindModule(module);
+        return requisitionRegistry.bindModule(module);
     }
 
     @Override
-    public void close() {
-        stopRequisition();
+    public void setup(@NotNull TerminableConsumer consumer) {
+        // this "setup" method allows the plugin to shutdown this requisition bus
+
+        consumer.bind(requisitionRegistry);
+        consumer.bindModule(new RequisitionListener());
     }
 
     /**
@@ -217,7 +206,7 @@ public enum RequisitionBus implements Terminable, TerminableConsumer {
                     broadcast(Component.text(MewEconomy.plugin.message("command.requisition.req-update"))
                             .replaceText(builder -> builder.matchLiteral("{player}").replacement(requisition.getBuyer().displayName()))
                             .replaceText(builder -> builder.matchLiteral("{item}").replacement(requisition.getReqItem().displayName()))
-                            .replaceText(builder -> builder.matchLiteral("{amount}").replacement(Component.text(requisition.getAmountNeeded())))
+                            .replaceText(builder -> builder.matchLiteral("{amount}").replacement(Component.text(requisition.getTotalAmountNeeded())))
                             .replaceText(builder -> builder.matchLiteral("{unit_price}").replacement(Component.text(requisition.getUnitPrice()).color(NamedTextColor.LIGHT_PURPLE)))
                             .replaceText(builder -> builder.matchLiteral("{remains}").replacement(Component.text(requisition.getRemains()).color(NamedTextColor.RED))));
                 }

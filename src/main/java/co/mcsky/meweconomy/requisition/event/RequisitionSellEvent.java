@@ -11,9 +11,9 @@ import org.jetbrains.annotations.NotNull;
 public class RequisitionSellEvent extends Event implements Cancellable {
 
     public static final HandlerList handlers = new HandlerList();
+
     private final Requisition requisition;
     private final Player seller;
-
     private final ItemStack itemToSell;
 
     private boolean cancel;

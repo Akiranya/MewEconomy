@@ -31,7 +31,7 @@ public class Requisition implements TerminableModule {
     // the item to in this requisition, it's here for comparison of type/name/lore
     private final ItemStack reqItem;
     // the amount of this item to buy
-    private final int amountNeeded;
+    private final int totalAmountNeeded;
     // the unit price of this item
     private final double unitPrice;
 
@@ -40,15 +40,13 @@ public class Requisition implements TerminableModule {
     // buyer's location, used to drop items if the buyer is logout
     private Location buyerLocation;
 
-    public Requisition(Player buyer, ItemStack reqItem, int amountNeeded, double unitPrice) {
+    public Requisition(Player buyer, ItemStack reqItem, int totalAmountNeeded, double unitPrice) {
         checkShulkerBox(reqItem);
 
         this.startTime = System.currentTimeMillis();
         this.buyer = buyer;
-
         this.reqItem = reqItem.asOne(); // set to 1 because we don't need it
-
-        this.amountNeeded = amountNeeded;
+        this.totalAmountNeeded = totalAmountNeeded;
         this.unitPrice = unitPrice;
         this.duration = MewEconomy.plugin.config.requisition_duration;
     }
@@ -65,8 +63,8 @@ public class Requisition implements TerminableModule {
         return reqItem;
     }
 
-    public int getAmountNeeded() {
-        return amountNeeded;
+    public int getTotalAmountNeeded() {
+        return totalAmountNeeded;
     }
 
     public double getUnitPrice() {
@@ -77,12 +75,36 @@ public class Requisition implements TerminableModule {
         return amountSold;
     }
 
-    public void incrementAmountSold(int amountSold) {
+    /**
+     * Increases the amount sold for this requisition.
+     *
+     * @param amountSold the amount sold
+     * @return this instance
+     */
+    public Requisition incrementAmountSold(int amountSold) {
         this.amountSold += amountSold;
+        return this;
     }
 
+    /**
+     * Returns the remaining amount needed so far.
+     *
+     * @return the remaining amount needed
+     */
     public int getRemains() {
-        return amountNeeded - amountSold;
+        return totalAmountNeeded - amountSold;
+    }
+
+    /**
+     * Returns the remaining amount needed AFTER applying the specified amount
+     * sold. Note that this does not change the states of this requisition. To
+     * update the internal states, see {@link #incrementAmountSold(int)}.
+     *
+     * @param amountSold the amount sold
+     * @return a view of the remaining amount needed
+     */
+    public int getRemains(int amountSold) {
+        return getRemains() - amountSold;
     }
 
     public boolean isTimeout() {
