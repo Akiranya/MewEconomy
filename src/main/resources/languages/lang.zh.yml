@@ -27,10 +27,9 @@ command:
       cooldown: "&4冷却中: &c{remaining}&7小时"
   requisition:
     prefix: "&8[&e征购&8] "
-    req-init: "&b玩家 {player} &b正在征购 {item}&7x{amount} &b单价: {unit_price} 软妹币 &b征购时长 {remaining_time} 秒 &b输入 &6/msell [数量]&b 出售物品"
-    req-update: "&b玩家 {player} &b正在征购 {item}&7x{amount} &b单价: {unit_price} 软妹币 &b还需要 {remains} 个 &b输入 &6/msell [数量]&b 出售物品"
-    sell: "&b玩家 {player} &b出售了 &d{item}&7x&e{amount} &b当前还需要 &d{remains} &b个, &b输入 &6/msell <数量>&b 出售物品"
-    remaining: "&b剩余 {time} 秒."
+    req-init: "&b玩家 {player} &b正在征购 {item}&7x{amount}, &b单价: {unit_price} 软妹币, &b征购时长 {remaining_time} 秒. &b输入 &6/msell [数量]&b 出售物品."
+    req-update: "&b玩家 {player} &b正在征购 {item}&7x{amount}, &b单价: {unit_price} 软妹币, &b还需要 {remains} 个. &b输入 &6/msell [数量]&b 出售物品. 剩余 {remaining_time} 秒."
+    sell: "&b玩家 {player} &b出售了 &d{item}&7x&e{amount} &b当前还需要 &d{remains} &b个, &b输入 &6/msell <数量>&b 出售物品."
     end:
       timeout: "&b时间已到, 征购结束."
       cancel: "&b征购被取消."

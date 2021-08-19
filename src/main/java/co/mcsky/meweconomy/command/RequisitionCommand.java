@@ -95,7 +95,6 @@ public class RequisitionCommand extends BaseCommand {
                 RequisitionBus.sendMessage(seller, MewEconomy.plugin.message("command.requisition.invalid-amount"));
                 return;
             } else {
-                // seller cant sell more than 64 at a time
                 amountToSell = amount;
             }
         }

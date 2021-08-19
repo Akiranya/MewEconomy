@@ -34,7 +34,6 @@ public class MewEconomyConfig {
 
     public int requisition_duration;
     public List<Integer> broadcast_times;
-    public int broadcast_interval;
     public int sell_cooldown;
     public boolean allow_sell_to_self;
 
@@ -80,7 +79,6 @@ public class MewEconomyConfig {
 
             requisition_duration = root.node("requisition-duration").getInt(120);
             broadcast_times = root.node("broadcast-times").getList(Integer.class, List.of(90, 60, 30, 10, 5));
-            broadcast_interval = root.node("broadcast-interval").getInt(15);
             sell_cooldown = root.node("sell-cooldown").getInt(3);
             allow_sell_to_self = root.node("allow-sell-to-self").getBoolean(false);
         } catch (SerializationException e) {

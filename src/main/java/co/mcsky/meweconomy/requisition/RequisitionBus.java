@@ -216,15 +216,13 @@ public enum RequisitionBus implements TerminableModule, TerminableConsumer {
                 }
                 if (broadcastTimes.contains(--remainingSeconds)) {
                     // broadcast requisition at certain times
-                    broadcast(MewEconomy.plugin.message("command.requisition.remaining", "time", remainingSeconds));
-                } else if (remainingSeconds > 0 && remainingSeconds % MewEconomy.plugin.config.broadcast_interval == 0) {
-                    // broadcast requisition at certain interval
                     broadcast(Component.text(MewEconomy.plugin.message("command.requisition.req-update"))
                             .replaceText(builder -> builder.matchLiteral("{player}").replacement(requisition.getBuyer().displayName()))
                             .replaceText(builder -> builder.matchLiteral("{item}").replacement(requisition.getReqItem().displayName()))
                             .replaceText(builder -> builder.matchLiteral("{amount}").replacement(Component.text(requisition.getTotalAmountNeeded())))
                             .replaceText(builder -> builder.matchLiteral("{unit_price}").replacement(Component.text(requisition.getUnitPrice()).color(NamedTextColor.LIGHT_PURPLE)))
-                            .replaceText(builder -> builder.matchLiteral("{remains}").replacement(Component.text(requisition.getRemains()).color(NamedTextColor.RED))));
+                            .replaceText(builder -> builder.matchLiteral("{remains}").replacement(Component.text(requisition.getRemains()).color(NamedTextColor.RED)))
+                            .replaceText(builder -> builder.matchLiteral("{remaining_time}").replacement(Component.text(remainingSeconds))));
                 }
             } catch (Exception e) {
                 e.printStackTrace();
