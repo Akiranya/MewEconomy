@@ -119,22 +119,31 @@ public enum RequisitionBus implements TerminableModule, TerminableConsumer {
 
         // self to self
         if (seller.getUniqueId().equals(currentRequisition.getBuyer().getUniqueId())) {
-            seller.sendMessage(MewEconomy.plugin.message(seller, "command.requisition.seller.sell-to-self"));
+            RequisitionBus.sendMessage(seller, MewEconomy.plugin.message("command.requisition.seller.sell-to-self"));
             return;
         }
 
         // the item to be sold does not match
         if (!matched(itemToSell)) {
-            seller.sendMessage(MewEconomy.plugin.message(seller, "command.requisition.seller.invalid-item"));
+            RequisitionBus.sendMessage(seller, MewEconomy.plugin.message("command.requisition.seller.invalid-item"));
             return;
         }
 
         // oversold
         int remains = currentRequisition().getRemains();
         if (itemToSell.getAmount() > remains) {
-            seller.sendMessage(Component.text(MewEconomy.plugin.message(seller, "command.requisition.seller.oversold"))
+            RequisitionBus.sendMessage(seller, Component.text(MewEconomy.plugin.message("command.requisition.seller.oversold"))
                     .replaceText(b -> b.matchLiteral("{needed}").replacement(Component.text(currentRequisition.getRemains())))
                     .replaceText(b -> b.matchLiteral("{actual_amount}").replacement(Component.text(itemToSell.getAmount()))));
+            return;
+        }
+
+        // calculates the price of this transaction
+        final double price = itemToSell.getAmount() * currentRequisition().getUnitPrice();
+
+        // buyer cant afford the items
+        if (!MewEconomy.plugin.economy().has(currentRequisition().getBuyer(), price)) {
+            RequisitionBus.sendMessage(seller, MewEconomy.plugin.message("command.requisition.seller.insufficient-fund"));
             return;
         }
 
@@ -146,8 +155,6 @@ public enum RequisitionBus implements TerminableModule, TerminableConsumer {
 
         // remove certain amount of items from the seller's inventory
         seller.getInventory().removeItemAnySlot(itemToSell);
-        // calculates the price of this transaction
-        final double price = itemToSell.getAmount() * currentRequisition().getUnitPrice();
         // give money to the seller
         MewEconomy.plugin.economy().depositPlayer(seller, price);
 
