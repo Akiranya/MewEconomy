@@ -88,9 +88,10 @@ public enum RequisitionBus implements TerminableModule, TerminableConsumer {
             final Player p = opt.get();
             // try to add items to the inventory (has side-effect on the input item stack)
             final HashMap<Integer, ItemStack> leftover = p.getInventory().addItem(itemStack);
+            // drop the items on the feet if inventory full
             leftover.forEach((i, is) -> p.getWorld().dropItemNaturally(p.getLocation(), is));
         } else {
-            // if the buyer currently offline, simply drop items on the location where he last logged out
+            // if the player currently offline, simply drop items on the location where he last logged out
             final Location buyerLocation = currentRequisition().getBuyerLocation();
             buyerLocation.getWorld().dropItem(buyerLocation, itemStack);
         }
@@ -103,7 +104,7 @@ public enum RequisitionBus implements TerminableModule, TerminableConsumer {
      * @return true if the test item is equivalent to this item
      */
     public boolean matched(ItemStack test) {
-        // TODO better implementation?
+        // TODO more reasonable implementation to compare items
         return currentRequisition.getReqItem().isSimilar(test);
     }
 
@@ -117,19 +118,19 @@ public enum RequisitionBus implements TerminableModule, TerminableConsumer {
 
         // check conditions
 
-        // self to self
+        // sell to self
         if (seller.getUniqueId().equals(currentRequisition.getBuyer().getUniqueId())) {
             RequisitionBus.sendMessage(seller, MewEconomy.plugin.message("command.requisition.seller.sell-to-self"));
             return;
         }
 
-        // the item to be sold does not match
+        // item to be sold does not match
         if (!matched(itemToSell)) {
             RequisitionBus.sendMessage(seller, MewEconomy.plugin.message("command.requisition.seller.invalid-item"));
             return;
         }
 
-        // oversold
+        // seller oversold
         int remains = currentRequisition().getRemains();
         if (itemToSell.getAmount() > remains) {
             RequisitionBus.sendMessage(seller, Component.text(MewEconomy.plugin.message("command.requisition.seller.oversold"))
@@ -151,24 +152,25 @@ public enum RequisitionBus implements TerminableModule, TerminableConsumer {
             return;
         }
 
-        // --- 1. process the seller side ---
+        /*
+         --- process the seller side ---
+        */
 
-        // remove certain amount of items from the seller's inventory
         seller.getInventory().removeItemAnySlot(itemToSell);
-        // give money to the seller
         MewEconomy.plugin.economy().depositPlayer(seller, price);
 
-        // --- 2. process the buyer side ---
+        /*
+         --- process the buyer side ---
 
-        // give items to the buyer
-        // caveat: it's NECESSARY to pass on a clone of the item because
-        // method Inventory#addItem() has side-effects on the input items (idk why)
+         CAVEAT: it's NECESSARY to pass on a clone of the item because
+         method Inventory#addItem() has side-effects on the input items
+        */
+
         giveItem(currentRequisition().getBuyer(), itemToSell.clone());
-        // take money from the buyer
         MewEconomy.plugin.economy().withdrawPlayer(currentRequisition().getBuyer(), price);
 
         if (currentRequisition.incrementAmountSold(itemToSell.getAmount()).getRemains() <= 0) {
-            stopRequisition(EndReason.AMOUNT_MET); // halt the requisition if amount sold is enough
+            stopRequisition(EndReason.AMOUNT_MET);
         }
     }
 
@@ -186,14 +188,13 @@ public enum RequisitionBus implements TerminableModule, TerminableConsumer {
 
     @Override
     public void setup(@NotNull TerminableConsumer consumer) {
-        // this "setup" method allows the plugin to shutdown this requisition bus easily
-
+        // bind this with the plugin main instance
         consumer.bind(requisitionRegistry);
         consumer.bindModule(new RequisitionListener());
     }
 
     /**
-     * Caveat: this task must be scheduled to run EVERY second.
+     * CAVEAT: this task must be scheduled to run EVERY second.
      */
     private class RequisitionTask extends BukkitRunnable {
 

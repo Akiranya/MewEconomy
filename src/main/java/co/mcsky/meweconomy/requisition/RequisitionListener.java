@@ -21,50 +21,48 @@ import java.util.concurrent.TimeUnit;
  */
 public class RequisitionListener implements TerminableModule {
 
-    private final CooldownMap<UUID> cooldownMap;
+    private final CooldownMap<UUID> sellCooldownMap;
 
     public RequisitionListener() {
-        this.cooldownMap = CooldownMap.create(Cooldown.of(MewEconomy.plugin.config.sell_cooldown, TimeUnit.SECONDS));
+        this.sellCooldownMap = CooldownMap.create(Cooldown.of(MewEconomy.plugin.config.sell_cooldown, TimeUnit.SECONDS));
     }
 
     @Override
     public void setup(@NotNull TerminableConsumer consumer) {
-        Events.subscribe(RequisitionStartEvent.class).handler(e -> {
-            // listen to start event
+        Events.subscribe(RequisitionStartEvent.class).handler(this::onStart).bindWith(consumer);
+        Events.subscribe(RequisitionSellEvent.class).handler(this::onSell).bindWith(consumer);
+        Events.subscribe(RequisitionEndEvent.class).handler(this::onEnd).bindWith(consumer);
+    }
 
-            RequisitionBus.broadcast(Component.text(MewEconomy.plugin.message("command.requisition.req-init"))
-                    .replaceText(builder -> builder.matchLiteral("{player}").replacement(e.getRequisition().getBuyer().displayName()))
-                    .replaceText(builder -> builder.matchLiteral("{item}").replacement(e.getRequisition().getReqItem().displayName()))
-                    .replaceText(builder -> builder.matchLiteral("{amount}").replacement(Component.text(e.getRequisition().getRemains())))
-                    .replaceText(builder -> builder.matchLiteral("{unit_price}").replacement(Component.text(e.getRequisition().getUnitPrice()).color(NamedTextColor.LIGHT_PURPLE)))
-                    .replaceText(builder -> builder.matchLiteral("{remaining_time}").replacement(Component.text(e.getRequisition().getDuration()))));
-        }).bindWith(consumer);
+    private void onSell(RequisitionSellEvent event) {
+        if (!sellCooldownMap.test(event.getSeller().getUniqueId())) {
+            RequisitionBus.sendMessage(event.getSeller(), MewEconomy.plugin.message(event.getSeller(), "command.requisition.seller.too-fast"));
+            event.setCancelled(true);
+            return;
+        }
 
-        Events.subscribe(RequisitionEndEvent.class).handler(e -> {
-            // listen to end event
+        RequisitionBus.broadcast(Component.text(MewEconomy.plugin.message(event.getSeller(), "command.requisition.sell"))
+                .replaceText(builder -> builder.matchLiteral("{player}").replacement(event.getSeller().displayName()))
+                .replaceText(builder -> builder.matchLiteral("{item}").replacement(event.getRequisition().getReqItem().displayName()))
+                .replaceText(builder -> builder.matchLiteral("{amount}").replacement(Component.text(event.getItemToSell().getAmount())))
+                .replaceText(builder -> builder.matchLiteral("{remains}").replacement(Component.text(event.getRequisition().getRemains(event.getItemToSell().getAmount())).color(NamedTextColor.RED))));
+    }
 
-            switch (e.getRequisitionEndReason()) {
-                case AMOUNT_MET -> RequisitionBus.broadcast(MewEconomy.plugin.message("command.requisition.end.done"));
-                case TIMEOUT -> RequisitionBus.broadcast(MewEconomy.plugin.message("command.requisition.end.timeout"));
-                case CANCEL -> RequisitionBus.broadcast(MewEconomy.plugin.message("command.requisition.end.cancel"));
-                case ERROR -> RequisitionBus.broadcast(MewEconomy.plugin.message("command.requisition.end.error"));
-            }
-        }).bindWith(consumer);
+    private void onStart(RequisitionStartEvent event) {
+        RequisitionBus.broadcast(Component.text(MewEconomy.plugin.message("command.requisition.req-init"))
+                .replaceText(builder -> builder.matchLiteral("{player}").replacement(event.getRequisition().getBuyer().displayName()))
+                .replaceText(builder -> builder.matchLiteral("{item}").replacement(event.getRequisition().getReqItem().displayName()))
+                .replaceText(builder -> builder.matchLiteral("{amount}").replacement(Component.text(event.getRequisition().getRemains())))
+                .replaceText(builder -> builder.matchLiteral("{unit_price}").replacement(Component.text(event.getRequisition().getUnitPrice()).color(NamedTextColor.LIGHT_PURPLE)))
+                .replaceText(builder -> builder.matchLiteral("{remaining_time}").replacement(Component.text(event.getRequisition().getDuration()))));
+    }
 
-        Events.subscribe(RequisitionSellEvent.class).handler(e -> {
-            // listen to sell event
-
-            if (!cooldownMap.test(e.getSeller().getUniqueId())) {
-                RequisitionBus.sendMessage(e.getSeller(), MewEconomy.plugin.message(e.getSeller(), "command.requisition.seller.too-fast"));
-                e.setCancelled(true);
-                return;
-            }
-
-            RequisitionBus.broadcast(Component.text(MewEconomy.plugin.message(e.getSeller(), "command.requisition.sell"))
-                    .replaceText(builder -> builder.matchLiteral("{player}").replacement(e.getSeller().displayName()))
-                    .replaceText(builder -> builder.matchLiteral("{item}").replacement(e.getRequisition().getReqItem().displayName()))
-                    .replaceText(builder -> builder.matchLiteral("{amount}").replacement(Component.text(e.getItemToSell().getAmount())))
-                    .replaceText(builder -> builder.matchLiteral("{remains}").replacement(Component.text(e.getRequisition().getRemains(e.getItemToSell().getAmount())).color(NamedTextColor.RED))));
-        }).bindWith(consumer);
+    private void onEnd(RequisitionEndEvent event) {
+        switch (event.getRequisitionEndReason()) {
+            case AMOUNT_MET -> RequisitionBus.broadcast(MewEconomy.plugin.message("command.requisition.end.done"));
+            case TIMEOUT -> RequisitionBus.broadcast(MewEconomy.plugin.message("command.requisition.end.timeout"));
+            case CANCEL -> RequisitionBus.broadcast(MewEconomy.plugin.message("command.requisition.end.cancel"));
+            case ERROR -> RequisitionBus.broadcast(MewEconomy.plugin.message("command.requisition.end.error"));
+        }
     }
 }

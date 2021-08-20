@@ -28,15 +28,16 @@ public class ShopTaxProcessor implements TerminableModule {
 
     @Override
     public void setup(@NotNull TerminableConsumer consumer) {
-        // Listen the event earliest so that it can affect later events.
+        // listen to the event earliest
+        // so that it can affect later events
+
         Events.subscribe(CurrencyTransferEvent.class, EventPriority.LOWEST).handler(e -> {
-            // we may not need so precise values, right?
             double amountSent = e.getAmountSent().doubleValue();
             double amountReceived = e.getAmountReceived().doubleValue();
 
             double tax = 0D;
             if (e.getPartner().equals(adminShopUUID)) {
-                // business logic 1: it's an admin shop
+                // case 1: it's an admin shop
 
                 if (e.getDirection() == CurrencyTransferEvent.Direction.PARTNER) {
                     // player is buying items from admin shop
@@ -50,7 +51,7 @@ public class ShopTaxProcessor implements TerminableModule {
                     }
                 }
             } else {
-                // business logic 2: it's a player shop
+                // case 2: it's a player shop
 
                 tax = amountReceived * (plugin.config.player_shop_tax_percent / 100D);
                 double amountReceivedTaxed = amountReceived - tax; // tax the receiver
