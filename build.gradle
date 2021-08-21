@@ -9,8 +9,8 @@ ext.minecraftVersion = "1.17.1"
 sourceCompatibility = JavaVersion.VERSION_16
 targetCompatibility = JavaVersion.VERSION_16
 
-// Version used for distribution.
-group 'co.mcsky'
+// version used for distribution.
+group = 'co.mcsky'
 archivesBaseName = "${pluginNameUpper}-mc$minecraftVersion"
 version = "$majorVersion.$minorVersion".toString()
 
@@ -26,59 +26,34 @@ compileJava {
 }
 
 repositories {
+    mavenLocal()
     mavenCentral()
 
-    // spigot
-    maven { url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
-    // paper
-    maven { url 'https://papermc.io/repo/repository/maven-public/' }
-    // lang + chestshop
-    maven { url 'https://repo.minebench.de/' }
-    // commands
-    maven { url 'https://repo.aikar.co/content/groups/aikar/' }
-    // helper
-    maven { url 'https://repo.lucko.me' }
-    // towny + moecore
-    maven { url 'https://jitpack.io' }
-    // nyaacore
-    maven { url 'https://ci.nyaacat.com/maven/' }
-    // vault-repo
-    maven { url 'https://nexus.hc.to/content/repositories/pub_releases' }
-    // essentialsX
-    maven { url 'https://repo.essentialsx.net/releases/' }
+    maven { name = 'spigotmc'; url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
+    maven { name = 'papermc'; url = 'https://papermc.io/repo/repository/maven-public/' }
+    maven { name = 'lucko'; url = 'https://repo.lucko.me' }
+    maven { name = 'aikar'; url = 'https://repo.aikar.co/content/groups/aikar/' }
+    maven { name = 'minebench'; url = 'https://repo.minebench.de/' }
+    maven { name = 'vault-repo'; url = 'https://nexus.hc.to/content/repositories/pub_releases' }
+    maven { name = 'essentialsx'; url = 'https://repo.essentialsx.net/releases/' }
+    maven { name = 'jitpack'; url = 'https://jitpack.io' }
+    maven { name = 'nyaacat'; url = 'https://ci.nyaacat.com/maven/' }
 }
 
 dependencies {
-    testImplementation('org.junit.jupiter:junit-jupiter-api:5.6.0')
-    testRuntimeOnly('org.junit.jupiter:junit-jupiter-engine')
+    testImplementation('org.junit.jupiter:junit-jupiter-api:5.7.2')
+    testRuntimeOnly('org.junit.jupiter:junit-jupiter-engine:5.7.2')
 
     compileOnly('io.papermc.paper:paper-api:1.17.1-R0.1-SNAPSHOT')
-
     compileOnly('me.lucko:helper:5.6.8')
     compileOnly('me.lucko:helper-sql:1.3.2')
     compileOnly('me.lucko:helper-profiles:1.2.0')
-
-    // luckperms
     compileOnly('net.luckperms:api:5.3')
-
-    // config framework
-    compileOnly('org.spongepowered:configurate-core:4.1.1')
-    compileOnly('org.spongepowered:configurate-yaml:4.1.1')
-
-    // i18n framework
-    compileOnly('de.themoep.utils:lang-bukkit:1.3-SNAPSHOT')
-
-    // command framework
-    compileOnly('co.aikar:acf-paper:0.5.0-SNAPSHOT')
-
     compileOnly('com.github.TownyAdvanced:Towny:0.97.0.11')
     compileOnly('com.acrobot.chestshop:chestshop:3.12')
-
     compileOnly('net.milkbowl.vault:VaultAPI:1.7') { transitive = false }
     compileOnly('net.ess3:EssentialsX:2.18.2') { transitive = false }
-
-    // moecore
-    compileOnly('com.github.Akiranya:MoeCore:0.5.4')
+    compileOnly('co.mcsky:MoeCore:5.7')
 }
 
 test {
