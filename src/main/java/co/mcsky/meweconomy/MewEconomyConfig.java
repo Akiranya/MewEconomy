@@ -12,25 +12,23 @@ import java.util.concurrent.TimeUnit;
 public class MewEconomyConfig {
     public static final String FILENAME = "config.yml";
 
+    private final YamlConfigurationLoader loader;
+
     /* config nodes start */
 
     public boolean debug;
     public long save_interval;
     public int decimal_round;
-
     public double daily_balance;
     public double daily_balance_buy_percent;
     public long daily_balance_timeout;
     public boolean daily_balance_remind_full;
-
     public double admin_shop_buy_tax_percent;
     public double player_shop_tax_percent;
-
     public boolean vip_enabled;
     public String vip_group_name;
     public String vip_shared_warp_group_name;
     public long vip_set_warp_cooldown;
-
     public int requisition_duration;
     public List<Integer> broadcast_times;
     public int sell_cooldown;
@@ -38,7 +36,6 @@ public class MewEconomyConfig {
 
     /* config nodes end */
 
-    private YamlConfigurationLoader loader;
     private CommentedConfigurationNode root;
 
     public MewEconomyConfig() {

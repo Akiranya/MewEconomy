@@ -15,7 +15,7 @@ public class SystemBalanceCommand extends BaseCommand {
     @Default
     @Subcommand("balance")
     public void balance(CommandSender sender) {
-        sender.sendMessage(MewEconomy.text("command.system-balance.view", "balance", MoeCore.plugin.systemAccount().getBalance()));
+        sender.sendMessage(MewEconomy.text("command.system-balance.view", "balance", MoeCore.systemAccount().getBalance()));
     }
 
     @Subcommand("take")
@@ -25,7 +25,7 @@ public class SystemBalanceCommand extends BaseCommand {
     public void take(CommandSender sender, OfflinePlayer player, double amount) {
         double playerBalance = MewEconomy.economy().getBalance(player);
         double withdraw = Math.min(playerBalance, amount);
-        if (MoeCore.plugin.systemAccount().withdrawToSystem(player, withdraw)) {
+        if (MoeCore.systemAccount().withdrawToSystem(player, withdraw)) {
             sender.sendMessage(MewEconomy.text("command.system-balance.take.sender-success", "amount", withdraw));
             sendMessageOnline(player, MewEconomy.text("command.system-balance.take.receiver-success", "amount", withdraw));
         } else {
@@ -38,7 +38,7 @@ public class SystemBalanceCommand extends BaseCommand {
     @CommandCompletion("@players @nothing")
     @Syntax("<player> <percent(0-100)>")
     public void percent(CommandSender sender, OfflinePlayer player, @Conditions("limits:min=0,max=100") double percent) {
-        double balance = MoeCore.plugin.systemAccount().getBalance();
+        double balance = MoeCore.systemAccount().getBalance();
         double withdraw = Math.min(balance, balance * percent / 100D);
         depositFromSystem(sender, player, withdraw);
     }
@@ -48,7 +48,7 @@ public class SystemBalanceCommand extends BaseCommand {
     @CommandCompletion("@players @nothing")
     @Syntax("<player> <amount>")
     public void decimal(CommandSender sender, OfflinePlayer player, @Conditions("limits:min=0") double amount) {
-        double balance = MoeCore.plugin.systemAccount().getBalance();
+        double balance = MoeCore.systemAccount().getBalance();
         double withdraw = Math.min(balance, amount);
         depositFromSystem(sender, player, withdraw);
     }
@@ -58,7 +58,7 @@ public class SystemBalanceCommand extends BaseCommand {
     }
 
     private void depositFromSystem(CommandSender sender, OfflinePlayer player, double withdraw) {
-        if (MoeCore.plugin.systemAccount().depositFromSystem(player, withdraw)) {
+        if (MoeCore.systemAccount().depositFromSystem(player, withdraw)) {
             sender.sendMessage(MewEconomy.text("command.system-balance.give.sender-success", "amount", withdraw));
             sendMessageOnline(player, MewEconomy.text("command.system-balance.give.receiver-success", "amount", withdraw));
         } else {

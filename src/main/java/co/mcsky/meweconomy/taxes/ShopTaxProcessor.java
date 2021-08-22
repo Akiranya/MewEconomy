@@ -43,7 +43,7 @@ public class ShopTaxProcessor implements TerminableModule {
 
                     // make money and deposit to system account
                     tax = amountSent * (MewEconomy.config().admin_shop_buy_tax_percent / 100D);
-                    MoeCore.plugin.systemAccount().depositSystem(tax);
+                    MoeCore.systemAccount().depositSystem(tax);
 
                     if (MewEconomy.config().debug) {
                         MewEconomy.logger().info("System account received: %s".formatted(tax));
@@ -55,7 +55,7 @@ public class ShopTaxProcessor implements TerminableModule {
                 tax = amountReceived * (MewEconomy.config().player_shop_tax_percent / 100D);
                 double amountReceivedTaxed = amountReceived - tax; // tax the receiver
                 e.setAmountReceived(BigDecimal.valueOf(amountReceivedTaxed));
-                MoeCore.plugin.systemAccount().depositSystem(tax);
+                MoeCore.systemAccount().depositSystem(tax);
             }
 
             if (MewEconomy.config().debug) {
