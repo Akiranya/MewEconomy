@@ -25,7 +25,7 @@ public class MewEconomy extends ExtendedJavaPlugin {
 
     private MewEconomyConfig config;
     private LanguageManager languageManager;
-    private TextRepository textConfig;
+    private TextRepository textRepository;
     private Economy eco;
     private MituanHub mituan;
     private DailyBalanceFileHandler dailyBalanceFileHandler;
@@ -56,7 +56,7 @@ public class MewEconomy extends ExtendedJavaPlugin {
     }
 
     public static Text text3(String key) {
-        return plugin.textConfig.get(key);
+        return plugin.textRepository.get(key);
     }
 
     public static Economy economy() {
@@ -150,7 +150,7 @@ public class MewEconomy extends ExtendedJavaPlugin {
             }
             return null;
         });
-        this.textConfig = new TextRepository(MewEconomy::text);
+        this.textRepository = new TextRepository(MewEconomy::text);
     }
 
 }
