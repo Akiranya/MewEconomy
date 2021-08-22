@@ -17,7 +17,7 @@ public class DailyBalanceModel {
 
     public DailyBalanceModel(UUID playerUUID) {
         this.playerUUID = playerUUID;
-        this.dailyBalance = MewEconomy.plugin.config.daily_balance; // 1000 RuanMeiBi daily
+        this.dailyBalance = MewEconomy.config().daily_balance; // 1000 RuanMeiBi daily
         this.cooldown = getDefaultCooldown();
     }
 
@@ -28,7 +28,7 @@ public class DailyBalanceModel {
     }
 
     public static Cooldown getDefaultCooldown() {
-        return Cooldown.of(MewEconomy.plugin.config.daily_balance_timeout, TimeUnit.MILLISECONDS);
+        return Cooldown.of(MewEconomy.config().daily_balance_timeout, TimeUnit.MILLISECONDS);
     }
 
     public UUID getPlayerUUID() {
@@ -40,20 +40,20 @@ public class DailyBalanceModel {
     }
 
     public void setBalance(double newBalance) {
-        dailyBalance = Math.min(MewEconomy.plugin.config.daily_balance, newBalance);
+        dailyBalance = Math.min(MewEconomy.config().daily_balance, newBalance);
     }
 
     public boolean isBalanceFull() {
-        return dailyBalance >= MewEconomy.plugin.config.daily_balance;
+        return dailyBalance >= MewEconomy.config().daily_balance;
     }
 
     public void incrementBalance(double amount) {
         dailyBalance += amount;
-        dailyBalance = Math.min(MewEconomy.plugin.config.daily_balance, Math.max(0D, dailyBalance)); // integrity check
+        dailyBalance = Math.min(MewEconomy.config().daily_balance, Math.max(0D, dailyBalance)); // integrity check
     }
 
     public void resetBalance() {
-        dailyBalance = MewEconomy.plugin.config.daily_balance;
+        dailyBalance = MewEconomy.config().daily_balance;
     }
 
     public Cooldown getCooldown() {
@@ -67,8 +67,8 @@ public class DailyBalanceModel {
     public void testResetBalance() {
         if (getCooldown().test()) {
             resetBalance();
-            if (MewEconomy.plugin.debugMode()) {
-                MewEconomy.plugin.getLogger().info("Player %s's daily balance reset".formatted(playerUUID));
+            if (MewEconomy.config().debug) {
+                MewEconomy.logger().info("Player %s's daily balance reset".formatted(playerUUID));
             }
         }
     }

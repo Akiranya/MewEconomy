@@ -27,7 +27,7 @@ public class DailyBalanceProcessor implements TerminableModule {
     @Override
     public void setup(@NotNull TerminableConsumer consumer) {
         Events.subscribe(PlayerJoinEvent.class)
-                .filter(e -> !MewEconomy.plugin.getDailyDatasource().hasPlayerModel(e.getPlayer().getUniqueId()))
+                .filter(e -> !MewEconomy.dailyDatasource().hasPlayerModel(e.getPlayer().getUniqueId()))
                 .handler(this::onJoin)
                 .bindWith(consumer);
         Events.subscribe(PreTransactionEvent.class)
@@ -42,9 +42,9 @@ public class DailyBalanceProcessor implements TerminableModule {
     private void onJoin(PlayerJoinEvent e) {
         // add data to data source when new player joins
 
-        MewEconomy.plugin.getDailyDatasource().addPlayerModel(new DailyBalanceModel(e.getPlayer().getUniqueId()));
-        if (MewEconomy.plugin.debugMode()) {
-            MewEconomy.plugin.getLogger().info("Adding player model to data source: %s".formatted(e.getPlayer().getName()));
+        MewEconomy.dailyDatasource().addPlayerModel(new DailyBalanceModel(e.getPlayer().getUniqueId()));
+        if (MewEconomy.config().debug) {
+            MewEconomy.logger().info("Adding player model to data source: %s".formatted(e.getPlayer().getName()));
         }
     }
 
@@ -52,7 +52,7 @@ public class DailyBalanceProcessor implements TerminableModule {
         // listen to admin transactions to control daily balance
 
         final Player player = e.getClient();
-        final DailyBalanceModel model = MewEconomy.plugin.getDailyDatasource().getPlayerModel(player.getUniqueId());
+        final DailyBalanceModel model = MewEconomy.dailyDatasource().getPlayerModel(player.getUniqueId());
         model.testResetBalance();
 
         // the price on the admin shop
@@ -60,19 +60,19 @@ public class DailyBalanceProcessor implements TerminableModule {
 
         switch (e.getTransactionType()) {
             case BUY -> { // the player is buying items from admin shops
-                double increment = price * MewEconomy.plugin.config.daily_balance_buy_percent / 100D;
+                double increment = price * MewEconomy.config().daily_balance_buy_percent / 100D;
                 model.incrementBalance(increment);
-                if (MewEconomy.plugin.config.daily_balance_remind_full && model.isBalanceFull()) {
+                if (MewEconomy.config().daily_balance_remind_full && model.isBalanceFull()) {
                     // adds cooldown to not send messages too often
                     if (messageReminderCooldown.test(player)) {
-                        player.sendMessage(MewEconomy.plugin.message(player, "chat.reach-daily-balance"));
+                        player.sendMessage(MewEconomy.text("chat.reach-daily-balance"));
                     }
                 }
             }
             case SELL -> { // the player is selling items to admin shops
                 if (model.getDailyBalance() < price) {
                     e.setCancelled(PreTransactionEvent.TransactionOutcome.OTHER);
-                    player.sendMessage(MewEconomy.plugin.message(player, "chat.insufficient-daily-balance", "required_amount", price, "daily_balance", model.getDailyBalance()));
+                    player.sendMessage(MewEconomy.text("chat.insufficient-daily-balance", "required_amount", price, "daily_balance", model.getDailyBalance()));
                     return;
                 }
                 model.incrementBalance(-price);

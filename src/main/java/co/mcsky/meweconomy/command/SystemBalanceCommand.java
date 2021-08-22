@@ -15,7 +15,7 @@ public class SystemBalanceCommand extends BaseCommand {
     @Default
     @Subcommand("balance")
     public void balance(CommandSender sender) {
-        sender.sendMessage(MewEconomy.plugin.message("command.system-balance.view", "balance", MoeCore.plugin.systemAccount().getBalance()));
+        sender.sendMessage(MewEconomy.text("command.system-balance.view", "balance", MoeCore.plugin.systemAccount().getBalance()));
     }
 
     @Subcommand("take")
@@ -23,13 +23,13 @@ public class SystemBalanceCommand extends BaseCommand {
     @CommandCompletion("@players @nothing")
     @Syntax("<player> <amount>")
     public void take(CommandSender sender, OfflinePlayer player, double amount) {
-        double playerBalance = MewEconomy.plugin.economy().getBalance(player);
+        double playerBalance = MewEconomy.economy().getBalance(player);
         double withdraw = Math.min(playerBalance, amount);
         if (MoeCore.plugin.systemAccount().withdrawToSystem(player, withdraw)) {
-            sender.sendMessage(MewEconomy.plugin.message(sender, "command.system-balance.take.sender-success", "amount", withdraw));
-            sendMessageOnline(player, MewEconomy.plugin.message("command.system-balance.take.receiver-success", "amount", withdraw));
+            sender.sendMessage(MewEconomy.text("command.system-balance.take.sender-success", "amount", withdraw));
+            sendMessageOnline(player, MewEconomy.text("command.system-balance.take.receiver-success", "amount", withdraw));
         } else {
-            sender.sendMessage(MewEconomy.plugin.message(sender, "command.system-balance.take.failed"));
+            sender.sendMessage(MewEconomy.text("command.system-balance.take.failed"));
         }
     }
 
@@ -59,10 +59,10 @@ public class SystemBalanceCommand extends BaseCommand {
 
     private void depositFromSystem(CommandSender sender, OfflinePlayer player, double withdraw) {
         if (MoeCore.plugin.systemAccount().depositFromSystem(player, withdraw)) {
-            sender.sendMessage(MewEconomy.plugin.message(sender, "command.system-balance.give.sender-success", "amount", withdraw));
-            sendMessageOnline(player, MewEconomy.plugin.message("command.system-balance.give.receiver-success", "amount", withdraw));
+            sender.sendMessage(MewEconomy.text("command.system-balance.give.sender-success", "amount", withdraw));
+            sendMessageOnline(player, MewEconomy.text("command.system-balance.give.receiver-success", "amount", withdraw));
         } else {
-            sender.sendMessage(MewEconomy.plugin.message(sender, "command.system-balance.give.failed"));
+            sender.sendMessage(MewEconomy.text("command.system-balance.give.failed"));
         }
     }
 }

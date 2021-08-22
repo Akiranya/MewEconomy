@@ -48,7 +48,7 @@ public class Requisition implements TerminableModule {
         this.reqItem = reqItem.asOne(); // set to 1 because we don't need it
         this.totalAmountNeeded = totalAmountNeeded;
         this.unitPrice = unitPrice;
-        this.duration = MewEconomy.plugin.config.requisition_duration;
+        this.duration = MewEconomy.config().requisition_duration;
     }
 
     public int getDuration() {

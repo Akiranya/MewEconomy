@@ -30,13 +30,13 @@ import java.util.regex.Pattern;
 
 import static co.mcsky.meweconomy.MewEconomy.plugin;
 
-public class RiceManager implements TerminableModule {
+public class MituanHub implements TerminableModule {
 
     private static final String ESS_PER_WARP_PERM_PREFIX = "essentials.warps.";
 
     private final IEssentials ess;
 
-    public RiceManager() {
+    public MituanHub() {
         this.ess = (net.ess3.api.IEssentials) plugin.getServer().getPluginManager().getPlugin("Essentials");
     }
 
@@ -46,7 +46,7 @@ public class RiceManager implements TerminableModule {
      */
     public void setWarpCommand(Player p, String name) {
         if (NumberUtil.isInt(name)) {
-            p.sendMessage(MewEconomy.plugin.message(p, "command.mituan.setwarp.invalid-name", "name", name));
+            p.sendMessage(MewEconomy.text("command.mituan.setwarp.invalid-name", "name", name));
             return;
         }
 
@@ -65,23 +65,23 @@ public class RiceManager implements TerminableModule {
                 final Instant expireInstant = expiryDate.toInstant();
                 final Instant now = Instant.now();
                 final long l = Duration.between(now, expireInstant).toHours();
-                p.sendMessage(plugin.message(p, "command.mituan.setwarp.cooldown", "remaining", l));
+                p.sendMessage(MewEconomy.text("command.mituan.setwarp.cooldown", "remaining", l));
                 return;
             }
             try {
                 warps.setWarp(iu, name, iu.getLocation());
 
                 // send success message
-                final Date expiresAt = Date.from(Instant.now().plus(plugin.config.vip_set_warp_cooldown, ChronoUnit.MILLIS));
+                final Date expiresAt = Date.from(Instant.now().plus(MewEconomy.config().vip_set_warp_cooldown, ChronoUnit.MILLIS));
                 iu.addCommandCooldown(Pattern.compile("^setwarp"), expiresAt, true);
-                p.sendMessage(plugin.message(p, "command.mituan.setwarp.success", "name", name, "location", ACFBukkitUtil.blockLocationToString(p.getLocation())));
+                p.sendMessage(MewEconomy.text("command.mituan.setwarp.success", "name", name, "location", ACFBukkitUtil.blockLocationToString(p.getLocation())));
 
                 // add shared permission
                 addSharedWarpPermission(name);
             } catch (Exception ignored) {
             }
         } else {
-            p.sendMessage(plugin.message(p, "command.mituan.setwarp.overwrite"));
+            p.sendMessage(MewEconomy.text("command.mituan.setwarp.overwrite"));
         }
     }
 
@@ -92,7 +92,7 @@ public class RiceManager implements TerminableModule {
         // 在退出游戏时从共享权限组中移除传送点的权限
         final MetadataKey<Empty> vip = MetadataKey.createEmptyKey("vip");
         Events.subscribe(PlayerJoinEvent.class)
-                .filter(e -> plugin.config.vip_enabled)
+                .filter(e -> MewEconomy.config().vip_enabled)
                 .filter(e -> isPlayerVip(e.getPlayer()))
                 .handler(e -> {
                     // 如果玩家是米团，给他添加一个 metadata
@@ -103,22 +103,22 @@ public class RiceManager implements TerminableModule {
                 })
                 .bindWith(consumer);
         Events.subscribe(PlayerQuitEvent.class)
-                .filter(e -> plugin.config.vip_enabled)
+                .filter(e -> MewEconomy.config().vip_enabled)
                 .filter(e -> Metadata.provideForPlayer(e.getPlayer()).has(vip))
                 .handler(e -> removeSharedWarpPermission(e.getPlayer().getName().toLowerCase()))
                 .bindWith(consumer);
     }
 
     private boolean isPlayerVip(Player player) {
-        return LuckPermsUtil.isPlayerInGroup(player, plugin.config.vip_group_name);
+        return LuckPermsUtil.isPlayerInGroup(player, MewEconomy.config().vip_group_name);
     }
 
     private void addSharedWarpPermission(String vipPlayerName) {
-        LuckPermsUtil.groupAddPermissionAsync(plugin.config.vip_shared_warp_group_name, ESS_PER_WARP_PERM_PREFIX + vipPlayerName);
+        LuckPermsUtil.groupAddPermissionAsync(MewEconomy.config().vip_shared_warp_group_name, ESS_PER_WARP_PERM_PREFIX + vipPlayerName);
     }
 
     private void removeSharedWarpPermission(String vipPlayerName) {
-        LuckPermsUtil.groupRemovePermissionAsync(plugin.config.vip_shared_warp_group_name, ESS_PER_WARP_PERM_PREFIX + vipPlayerName);
+        LuckPermsUtil.groupRemovePermissionAsync(MewEconomy.config().vip_shared_warp_group_name, ESS_PER_WARP_PERM_PREFIX + vipPlayerName);
     }
 
 }

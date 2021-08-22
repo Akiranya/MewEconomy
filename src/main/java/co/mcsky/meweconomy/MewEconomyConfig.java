@@ -52,7 +52,7 @@ public class MewEconomyConfig {
         try {
             root = loader.load();
         } catch (ConfigurateException e) {
-            MewEconomy.plugin.getLogger().severe(e.getMessage());
+            MewEconomy.logger().severe(e.getMessage());
             MewEconomy.plugin.getServer().getPluginManager().disablePlugin(MewEconomy.plugin);
         }
 
@@ -89,7 +89,7 @@ public class MewEconomyConfig {
         try {
             loader.save(root);
         } catch (ConfigurateException e) {
-            MewEconomy.plugin.getLogger().severe(e.getMessage());
+            MewEconomy.logger().severe(e.getMessage());
         }
     }
 

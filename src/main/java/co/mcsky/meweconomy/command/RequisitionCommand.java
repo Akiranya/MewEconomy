@@ -18,13 +18,13 @@ public class RequisitionCommand extends BaseCommand {
     @Syntax("<数量> <单价> [物品名]")
     public void cancel(Player player) {
         if (!RequisitionBus.INSTANCE.hasRequisition()) {
-            RequisitionBus.sendMessage(player, MewEconomy.plugin.message("command.requisition.seller.no-requisition"));
+            RequisitionBus.sendMessage(player, MewEconomy.text("command.requisition.seller.no-requisition"));
             return;
         }
         if (player.hasPermission("meco.admin") || player.getUniqueId().equals(RequisitionBus.INSTANCE.currentRequisition().getBuyer().getUniqueId())) {
             RequisitionBus.INSTANCE.stopRequisition(EndReason.CANCEL);
         } else {
-            RequisitionBus.sendMessage(player, MewEconomy.plugin.message(player, "command.requisition.cancel-failed"));
+            RequisitionBus.sendMessage(player, MewEconomy.text("command.requisition.cancel-failed"));
         }
     }
 
@@ -37,7 +37,7 @@ public class RequisitionCommand extends BaseCommand {
 
         // stop if there is already a running requisition
         if (RequisitionBus.INSTANCE.hasRequisition()) {
-            RequisitionBus.sendMessage(buyer, MewEconomy.plugin.message("command.requisition.buyer.already-running"));
+            RequisitionBus.sendMessage(buyer, MewEconomy.text("command.requisition.buyer.already-running"));
             return;
         }
 
@@ -49,14 +49,14 @@ public class RequisitionCommand extends BaseCommand {
         if (itemName != null && !itemName.isEmpty()) {
             Material material = Material.matchMaterial(itemName);
             if (material == null || !material.isItem()) {
-                RequisitionBus.sendMessage(buyer, MewEconomy.plugin.message("command.requisition.invalid-item"));
+                RequisitionBus.sendMessage(buyer, MewEconomy.text("command.requisition.invalid-item"));
                 return;
             }
             itemInMainHand = new ItemStack(material);
         }
 
         if (itemInMainHand.getType().isAir()) {
-            RequisitionBus.sendMessage(buyer, MewEconomy.plugin.message("command.requisition.no-item"));
+            RequisitionBus.sendMessage(buyer, MewEconomy.text("command.requisition.no-item"));
             return;
         }
 
@@ -73,7 +73,7 @@ public class RequisitionCommand extends BaseCommand {
 
         // there is no running requisition
         if (!RequisitionBus.INSTANCE.hasRequisition()) {
-            RequisitionBus.sendMessage(seller, MewEconomy.plugin.message("command.requisition.seller.no-requisition"));
+            RequisitionBus.sendMessage(seller, MewEconomy.text("command.requisition.seller.no-requisition"));
             return;
         }
 
@@ -81,7 +81,7 @@ public class RequisitionCommand extends BaseCommand {
 
         ItemStack itemInMainHand = seller.getInventory().getItemInMainHand();
         if (itemInMainHand.getType().isAir()) {
-            RequisitionBus.sendMessage(seller, MewEconomy.plugin.message("command.requisition.no-item"));
+            RequisitionBus.sendMessage(seller, MewEconomy.text("command.requisition.no-item"));
             return;
         }
 
@@ -92,7 +92,7 @@ public class RequisitionCommand extends BaseCommand {
         } else {
             // otherwise, take the specified amount
             if (amount <= 0) {
-                RequisitionBus.sendMessage(seller, MewEconomy.plugin.message("command.requisition.invalid-amount"));
+                RequisitionBus.sendMessage(seller, MewEconomy.text("command.requisition.invalid-amount"));
                 return;
             } else {
                 amountToSell = amount;
@@ -100,7 +100,7 @@ public class RequisitionCommand extends BaseCommand {
         }
 
         if (!seller.getInventory().containsAtLeast(itemInMainHand, amountToSell)) {
-            RequisitionBus.sendMessage(seller, MewEconomy.plugin.message(seller, "command.requisition.seller.insufficient-amount"));
+            RequisitionBus.sendMessage(seller, MewEconomy.text("command.requisition.seller.insufficient-amount"));
             return;
         }
 

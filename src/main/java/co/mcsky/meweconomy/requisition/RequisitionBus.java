@@ -44,15 +44,15 @@ public enum RequisitionBus implements TerminableModule, TerminableConsumer {
     }
 
     public static void broadcast(Component message) {
-        Bukkit.broadcast(Component.text(MewEconomy.plugin.message("command.requisition.prefix")).append(message));
-    }
-
-    public static void sendMessage(CommandSender sender, Component message) {
-        sender.sendMessage(Component.text(MewEconomy.plugin.message("command.requisition.prefix")).append(message));
+        Bukkit.broadcast(Component.text(MewEconomy.text("command.requisition.prefix")).append(message));
     }
 
     public static void sendMessage(CommandSender sender, String message) {
         sendMessage(sender, Component.text(message));
+    }
+
+    public static void sendMessage(CommandSender sender, Component message) {
+        sender.sendMessage(Component.text(MewEconomy.text("command.requisition.prefix")).append(message));
     }
 
     public void startRequisition(Requisition req) {
@@ -86,7 +86,7 @@ public enum RequisitionBus implements TerminableModule, TerminableConsumer {
         final Optional<Player> opt = Players.get(player.getUniqueId());
         if (opt.isPresent()) {
             final Player p = opt.get();
-            // try to add items to the inventory (has side-effect on the input item stack)
+            // try to add items to the inventory (has side effect on the input item stack)
             final HashMap<Integer, ItemStack> leftover = p.getInventory().addItem(itemStack);
             // drop the items on the feet if inventory full
             leftover.forEach((i, is) -> p.getWorld().dropItemNaturally(p.getLocation(), is));
@@ -120,31 +120,31 @@ public enum RequisitionBus implements TerminableModule, TerminableConsumer {
 
         // sell to self
         if (seller.getUniqueId().equals(currentRequisition.getBuyer().getUniqueId())) {
-            RequisitionBus.sendMessage(seller, MewEconomy.plugin.message("command.requisition.seller.sell-to-self"));
+            RequisitionBus.sendMessage(seller, MewEconomy.text("command.requisition.seller.sell-to-self"));
             return;
         }
 
         // item to be sold does not match
         if (!matched(itemToSell)) {
-            RequisitionBus.sendMessage(seller, MewEconomy.plugin.message("command.requisition.seller.invalid-item"));
+            RequisitionBus.sendMessage(seller, MewEconomy.text("command.requisition.seller.invalid-item"));
             return;
         }
 
         // seller oversold
         int remains = currentRequisition().getRemains();
         if (itemToSell.getAmount() > remains) {
-            RequisitionBus.sendMessage(seller, Component.text(MewEconomy.plugin.message("command.requisition.seller.oversold"))
-                    .replaceText(b -> b.matchLiteral("{needed}").replacement(Component.text(currentRequisition.getRemains())))
-                    .replaceText(b -> b.matchLiteral("{actual_amount}").replacement(Component.text(itemToSell.getAmount()))));
+            RequisitionBus.sendMessage(seller, MewEconomy.text3("command.requisition.seller.oversold")
+                    .replace("needed", currentRequisition.getRemains())
+                    .replace("actual_amount", itemToSell.getAmount()).asComponent());
             return;
         }
 
         // calculates the price of this transaction
         final double price = itemToSell.getAmount() * currentRequisition().getUnitPrice();
 
-        // buyer cant afford the items
-        if (!MewEconomy.plugin.economy().has(currentRequisition().getBuyer(), price)) {
-            RequisitionBus.sendMessage(seller, MewEconomy.plugin.message("command.requisition.seller.insufficient-fund"));
+        // buyer can't afford the items
+        if (!MewEconomy.economy().has(currentRequisition().getBuyer(), price)) {
+            RequisitionBus.sendMessage(seller, MewEconomy.text("command.requisition.seller.insufficient-fund"));
             return;
         }
 
@@ -157,17 +157,17 @@ public enum RequisitionBus implements TerminableModule, TerminableConsumer {
         */
 
         seller.getInventory().removeItemAnySlot(itemToSell);
-        MewEconomy.plugin.economy().depositPlayer(seller, price);
+        MewEconomy.economy().depositPlayer(seller, price);
 
         /*
          --- process the buyer side ---
 
          CAVEAT: it's NECESSARY to pass on a clone of the item because
-         method Inventory#addItem() has side-effects on the input items
+         method Inventory#addItem() has side effects on the input items
         */
 
         giveItem(currentRequisition().getBuyer(), itemToSell.clone());
-        MewEconomy.plugin.economy().withdrawPlayer(currentRequisition().getBuyer(), price);
+        MewEconomy.economy().withdrawPlayer(currentRequisition().getBuyer(), price);
 
         if (currentRequisition.incrementAmountSold(itemToSell.getAmount()).getRemains() <= 0) {
             stopRequisition(EndReason.AMOUNT_MET);
@@ -204,7 +204,7 @@ public enum RequisitionBus implements TerminableModule, TerminableConsumer {
 
         public RequisitionTask(Requisition requisition) {
             this.requisition = requisition;
-            this.broadcastTimes = new HashSet<>(MewEconomy.plugin.config.broadcast_times);
+            this.broadcastTimes = new HashSet<>(MewEconomy.config().broadcast_times);
             this.remainingSeconds = requisition.getDuration();
         }
 
@@ -217,13 +217,14 @@ public enum RequisitionBus implements TerminableModule, TerminableConsumer {
                 }
                 if (broadcastTimes.contains(--remainingSeconds)) {
                     // broadcast requisition at certain times
-                    broadcast(Component.text(MewEconomy.plugin.message("command.requisition.req-update"))
-                            .replaceText(builder -> builder.matchLiteral("{player}").replacement(requisition.getBuyer().displayName()))
-                            .replaceText(builder -> builder.matchLiteral("{item}").replacement(requisition.getReqItem().displayName()))
-                            .replaceText(builder -> builder.matchLiteral("{amount}").replacement(Component.text(requisition.getTotalAmountNeeded())))
-                            .replaceText(builder -> builder.matchLiteral("{unit_price}").replacement(Component.text(requisition.getUnitPrice()).color(NamedTextColor.LIGHT_PURPLE)))
-                            .replaceText(builder -> builder.matchLiteral("{remains}").replacement(Component.text(requisition.getRemains()).color(NamedTextColor.RED)))
-                            .replaceText(builder -> builder.matchLiteral("{remaining_time}").replacement(Component.text(remainingSeconds))));
+                    broadcast(MewEconomy.text3("command.requisition.req-update")
+                            .replace("player", requisition.getBuyer())
+                            .replace("item", requisition.getReqItem())
+                            .replace("amount", requisition.getTotalAmountNeeded())
+                            .replace("unit_price", requisition.getUnitPrice(), b -> b.color(NamedTextColor.LIGHT_PURPLE))
+                            .replace("remains", requisition.getRemains(), b -> b.color(NamedTextColor.RED))
+                            .replace("remaining_time", remainingSeconds)
+                            .asComponent());
                 }
             } catch (Exception e) {
                 e.printStackTrace();

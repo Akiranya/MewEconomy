@@ -19,10 +19,10 @@ public class DailyBalanceCommand extends BaseCommand {
 
     @Default
     public void balance(Player player) {
-        final DailyBalanceModel model = MewEconomy.plugin.getDailyDatasource().getPlayerModel(player.getUniqueId());
+        final DailyBalanceModel model = MewEconomy.dailyDatasource().getPlayerModel(player.getUniqueId());
         model.testResetBalance();
-        player.sendMessage(MewEconomy.plugin.message(player, "command.daily-balance.view", "balance", model.getDailyBalance()));
-        player.sendMessage(MewEconomy.plugin.message(player, "command.daily-balance.time", "time", model.getCooldown().remainingTime(TimeUnit.HOURS)));
+        player.sendMessage(MewEconomy.text("command.daily-balance.view", "balance", model.getDailyBalance()));
+        player.sendMessage(MewEconomy.text("command.daily-balance.time", "time", model.getCooldown().remainingTime(TimeUnit.HOURS)));
     }
 
     @Subcommand("view")
@@ -30,8 +30,8 @@ public class DailyBalanceCommand extends BaseCommand {
     @CommandCompletion("@players")
     @Syntax("<player>")
     public void view(CommandSender sender, OfflinePlayer player) {
-        final DailyBalanceModel model = MewEconomy.plugin.getDailyDatasource().getPlayerModel(player.getUniqueId());
-        sender.sendMessage(MewEconomy.plugin.message(sender, "command.daily-balance.view-others", "player", player.getName(), "balance", model.getDailyBalance()));
+        final DailyBalanceModel model = MewEconomy.dailyDatasource().getPlayerModel(player.getUniqueId());
+        sender.sendMessage(MewEconomy.text("command.daily-balance.view-others", "player", player.getName(), "balance", model.getDailyBalance()));
     }
 
     @Subcommand("add")
@@ -39,7 +39,7 @@ public class DailyBalanceCommand extends BaseCommand {
     @CommandCompletion("@players @nothing")
     @Syntax("<player> <amount>")
     public void add(CommandSender sender, String playerName, double amount) {
-        updateByName(sender, playerName, amount, p -> sender.sendMessage(MewEconomy.plugin.message(sender, "command.daily-balance.add", "amount", amount, "player", p.getName())));
+        updateByName(sender, playerName, amount, p -> sender.sendMessage(MewEconomy.text("command.daily-balance.add", "amount", amount, "player", p.getName())));
     }
 
     @Subcommand("take")
@@ -47,7 +47,7 @@ public class DailyBalanceCommand extends BaseCommand {
     @CommandCompletion("@players @nothing")
     @Syntax("<player> <amount>")
     public void take(CommandSender sender, String playerName, double amount) {
-        updateByName(sender, playerName, -amount, p -> sender.sendMessage(MewEconomy.plugin.message(sender, "command.daily-balance.take", "amount", amount, "player", p.getName())));
+        updateByName(sender, playerName, -amount, p -> sender.sendMessage(MewEconomy.text("command.daily-balance.take", "amount", amount, "player", p.getName())));
     }
 
     private void updateByName(CommandSender sender, String playerName, double amount, Consumer<OfflinePlayer> promptCallback) {
@@ -55,17 +55,17 @@ public class DailyBalanceCommand extends BaseCommand {
         final OfflinePlayer player = Bukkit.getOfflinePlayerIfCached(playerName);
         if (player == null) {
             Schedulers.async().run(() -> {
-                MewEconomy.plugin.getLogger().info("Fetching the UUID of name %s ...".formatted(playerName));
+                MewEconomy.logger().info("Fetching the UUID of name %s ...".formatted(playerName));
                 final OfflinePlayer fetchedPlayer = Bukkit.getOfflinePlayer(playerName);
                 if (!fetchedPlayer.hasPlayedBefore()) {
-                    sender.sendMessage(MewEconomy.plugin.message(sender, "command.daily-balance.player-dose-not-exist"));
+                    sender.sendMessage(MewEconomy.text("command.daily-balance.player-dose-not-exist"));
                     return;
                 }
-                MewEconomy.plugin.getDailyDatasource().getPlayerModel(fetchedPlayer).incrementBalance(amount);
+                MewEconomy.dailyDatasource().getPlayerModel(fetchedPlayer).incrementBalance(amount);
                 promptCallback.accept(fetchedPlayer);
             });
         } else {
-            final DailyBalanceModel playerModel = MewEconomy.plugin.getDailyDatasource().getPlayerModel(player);
+            final DailyBalanceModel playerModel = MewEconomy.dailyDatasource().getPlayerModel(player);
             playerModel.incrementBalance(amount);
             promptCallback.accept(player);
         }

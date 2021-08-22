@@ -14,21 +14,21 @@ public class ConsoleCommand extends BaseCommand {
     @CommandPermission("meco.admin")
     public void saveDatasource(CommandSender sender) {
         MewEconomy.plugin.saveDatasource();
-        sender.sendMessage(MewEconomy.plugin.message(sender, "command.datasource-saved"));
+        sender.sendMessage(MewEconomy.text("command.datasource-saved"));
     }
 
     @Subcommand("datasource load")
     @CommandPermission("meco.admin")
     public void loadDatasource(CommandSender sender) {
         MewEconomy.plugin.loadDatasource();
-        sender.sendMessage(MewEconomy.plugin.message(sender, "command.datasource-loaded"));
+        sender.sendMessage(MewEconomy.text("command.datasource-loaded"));
     }
 
     @Subcommand("reloadconfig")
     @CommandPermission("meco.admin")
     public void reload(CommandSender sender) {
         MewEconomy.plugin.reload();
-        sender.sendMessage(MewEconomy.plugin.message(sender, "command.plugin-reloaded"));
+        sender.sendMessage(MewEconomy.text("command.plugin-reloaded"));
     }
 
 }

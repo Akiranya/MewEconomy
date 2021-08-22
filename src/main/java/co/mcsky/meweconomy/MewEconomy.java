@@ -5,33 +5,83 @@ import co.mcsky.meweconomy.daily.DailyBalanceDatasource;
 import co.mcsky.meweconomy.daily.DailyBalanceFileHandler;
 import co.mcsky.meweconomy.daily.DailyBalanceProcessor;
 import co.mcsky.meweconomy.requisition.RequisitionBus;
-import co.mcsky.meweconomy.rice.RiceManager;
+import co.mcsky.meweconomy.rice.MituanHub;
 import co.mcsky.meweconomy.taxes.ShopTaxProcessor;
+import co.mcsky.moecore.text.Text;
+import co.mcsky.moecore.text.TextConfig;
 import de.themoep.utils.lang.bukkit.LanguageManager;
 import me.lucko.helper.Schedulers;
 import me.lucko.helper.Services;
 import me.lucko.helper.plugin.ExtendedJavaPlugin;
 import net.milkbowl.vault.economy.Economy;
-import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 
 public class MewEconomy extends ExtendedJavaPlugin {
 
     public static MewEconomy plugin;
-    public MewEconomyConfig config;
 
-    private LanguageManager lang;
+    private MewEconomyConfig config;
+    private LanguageManager languageManager;
+    private TextConfig textConfig;
     private Economy eco;
-
+    private MituanHub mituan;
     private DailyBalanceFileHandler dailyBalanceFileHandler;
     private DailyBalanceDatasource dailyBalanceDatasource;
-    private RiceManager riceManager;
 
-    public static double round(double value) {
-        double scale = Math.pow(10, Math.max(1, MewEconomy.plugin.config.decimal_round + 1));
-        return Math.round(value * scale) / scale;
+    public static Logger logger() {
+        return plugin.getLogger();
+    }
+
+    public static MewEconomyConfig config() {
+        return plugin.config;
+    }
+
+    public static String text(String key, Object... replacements) {
+        if (replacements.length == 0) {
+            return plugin.languageManager.getDefaultConfig().get(key);
+        } else {
+            String[] list = new String[replacements.length];
+            for (int i = 0; i < replacements.length; i++) {
+                if (replacements[i] instanceof Double || replacements[i] instanceof Float) {
+                    list[i] = ("%." + plugin.config.decimal_round + "f").formatted(replacements[i]);
+                } else {
+                    list[i] = replacements[i].toString();
+                }
+            }
+            return plugin.languageManager.getDefaultConfig().get(key, list);
+        }
+    }
+
+    public static Text text3(String key) {
+        return plugin.textConfig.get(key);
+    }
+
+    public static Economy economy() {
+        return plugin.eco;
+    }
+
+    public static MituanHub mituan() {
+        return plugin.mituan;
+    }
+
+    public static DailyBalanceDatasource dailyDatasource() {
+        return plugin.dailyBalanceDatasource;
+    }
+
+    public void loadDatasource() {
+        dailyBalanceDatasource = dailyBalanceFileHandler.load().orElseGet(DailyBalanceDatasource::new);
+    }
+
+    public void saveDatasource() {
+        dailyBalanceFileHandler.save(dailyBalanceDatasource);
+    }
+
+    public void reload() {
+        MewEconomy.plugin.loadLanguages();
+        MewEconomy.config().load();
     }
 
     @Override
@@ -58,7 +108,7 @@ public class MewEconomy extends ExtendedJavaPlugin {
 
         // schedule task to save data periodically
         Schedulers.async().runRepeating(() -> {
-            dailyBalanceFileHandler.save(getDailyDatasource());
+            dailyBalanceFileHandler.save(dailyDatasource());
             getLogger().info("Datasource saved successfully!");
         }, 0, TimeUnit.SECONDS, config.save_interval, TimeUnit.SECONDS).bindWith(this);
 
@@ -66,7 +116,7 @@ public class MewEconomy extends ExtendedJavaPlugin {
         bindModule(new ShopTaxProcessor());
         bindModule(new DailyBalanceProcessor());
         bindModule(RequisitionBus.INSTANCE);
-        riceManager = bindModule(new RiceManager());
+        mituan = bindModule(new MituanHub());
 
         loadLanguages();
         registerCommands();
@@ -79,11 +129,7 @@ public class MewEconomy extends ExtendedJavaPlugin {
         }
     }
 
-    public boolean debugMode() {
-        return config.debug;
-    }
-
-    public void registerCommands() {
+    private void registerCommands() {
         PaperCommandManager commands = new PaperCommandManager(this);
 
         // replacements have to be added here
@@ -94,60 +140,17 @@ public class MewEconomy extends ExtendedJavaPlugin {
         new MewEconomyCommands(commands);
     }
 
-    public void loadLanguages() {
-        this.lang = new LanguageManager(this, "languages", "zh");
-        this.lang.setPlaceholderPrefix("{");
-        this.lang.setPlaceholderSuffix("}");
-        this.lang.setProvider(sender -> {
+    private void loadLanguages() {
+        this.languageManager = new LanguageManager(this, "languages", "zh");
+        this.languageManager.setPlaceholderPrefix("{");
+        this.languageManager.setPlaceholderSuffix("}");
+        this.languageManager.setProvider(sender -> {
             if (sender instanceof Player) {
                 return ((Player) sender).locale().getLanguage();
             }
             return null;
         });
+        this.textConfig = new TextConfig(MewEconomy::text);
     }
 
-    public void loadDatasource() {
-        dailyBalanceDatasource = dailyBalanceFileHandler.load().orElseGet(DailyBalanceDatasource::new);
-    }
-
-    public void saveDatasource() {
-        dailyBalanceFileHandler.save(dailyBalanceDatasource);
-    }
-
-    public void reload() {
-        MewEconomy.plugin.loadLanguages();
-        MewEconomy.plugin.config.load();
-    }
-
-    public Economy economy() {
-        return eco;
-    }
-
-    public RiceManager getRiceManager() {
-        return riceManager;
-    }
-
-    public DailyBalanceDatasource getDailyDatasource() {
-        return dailyBalanceDatasource;
-    }
-
-    public String message(CommandSender sender, String key, Object... replacements) {
-        if (replacements.length == 0) {
-            return lang.getConfig(sender).get(key);
-        } else {
-            String[] list = new String[replacements.length];
-            for (int i = 0; i < replacements.length; i++) {
-                if (replacements[i] instanceof Double n) {
-                    list[i] = Double.toString(round(n));
-                } else {
-                    list[i] = replacements[i].toString();
-                }
-            }
-            return lang.getConfig(sender).get(key, list);
-        }
-    }
-
-    public String message(String key, Object... replacements) {
-        return message(plugin.getServer().getConsoleSender(), key, replacements);
-    }
 }

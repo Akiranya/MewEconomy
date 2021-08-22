@@ -17,7 +17,7 @@ public class MituanSimpleCommand extends BaseCommand {
     @Syntax("<name>")
     public void setWarp(Player player) {
         String warpName = player.getName().toLowerCase(); // force lowercase
-        MewEconomy.plugin.getRiceManager().setWarpCommand(player, warpName);
+        MewEconomy.mituan().setWarpCommand(player, warpName);
     }
 
 }
