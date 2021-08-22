@@ -16,6 +16,8 @@ import me.lucko.helper.plugin.ExtendedJavaPlugin;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.entity.Player;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
@@ -46,7 +48,7 @@ public class MewEconomy extends ExtendedJavaPlugin {
             String[] list = new String[replacements.length];
             for (int i = 0; i < replacements.length; i++) {
                 if (replacements[i] instanceof Double || replacements[i] instanceof Float) {
-                    list[i] = ("%." + plugin.config.decimal_round + "f").formatted(replacements[i]);
+                    list[i] = BigDecimal.valueOf(((Number) replacements[i]).doubleValue()).setScale(config().decimal_round, RoundingMode.HALF_UP).toPlainString();
                 } else {
                     list[i] = replacements[i].toString();
                 }
