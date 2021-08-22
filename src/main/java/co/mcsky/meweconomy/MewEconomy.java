@@ -8,7 +8,7 @@ import co.mcsky.meweconomy.requisition.RequisitionBus;
 import co.mcsky.meweconomy.rice.MituanHub;
 import co.mcsky.meweconomy.taxes.ShopTaxProcessor;
 import co.mcsky.moecore.text.Text;
-import co.mcsky.moecore.text.TextConfig;
+import co.mcsky.moecore.text.TextRepository;
 import de.themoep.utils.lang.bukkit.LanguageManager;
 import me.lucko.helper.Schedulers;
 import me.lucko.helper.Services;
@@ -25,7 +25,7 @@ public class MewEconomy extends ExtendedJavaPlugin {
 
     private MewEconomyConfig config;
     private LanguageManager languageManager;
-    private TextConfig textConfig;
+    private TextRepository textConfig;
     private Economy eco;
     private MituanHub mituan;
     private DailyBalanceFileHandler dailyBalanceFileHandler;
@@ -150,7 +150,7 @@ public class MewEconomy extends ExtendedJavaPlugin {
             }
             return null;
         });
-        this.textConfig = new TextConfig(MewEconomy::text);
+        this.textConfig = new TextRepository(MewEconomy::text);
     }
 
 }

@@ -51,7 +51,7 @@ public class DailyBalanceCommand extends BaseCommand {
     }
 
     private void updateByName(CommandSender sender, String playerName, double amount, Consumer<OfflinePlayer> promptCallback) {
-        // its just a convenient method to not repeat code in add() and take() below
+        // it's just a convenient method to not repeat code in add() and take() below
         final OfflinePlayer player = Bukkit.getOfflinePlayerIfCached(playerName);
         if (player == null) {
             Schedulers.async().run(() -> {
