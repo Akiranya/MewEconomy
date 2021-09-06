@@ -7,6 +7,7 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 public class MewEconomyPlaceholder extends PlaceholderExpansion {
 
@@ -35,6 +36,7 @@ public class MewEconomyPlaceholder extends PlaceholderExpansion {
         params = params.toLowerCase(Locale.ROOT);
         switch (params) {
             case "daily_balance" -> MewEconomy.dailyDatasource().getPlayerModel(player).getDailyBalanceString();
+            case "daily_balance_cooldown" -> MewEconomy.dailyDatasource().getPlayerModel(player).getCooldown().remainingTime(TimeUnit.HOURS);
             case "system_balance" -> MoeCore.systemAccount().getSystemBalanceString(MewEconomy.config().decimal_round);
         }
         return null;
