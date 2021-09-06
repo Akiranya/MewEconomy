@@ -53,7 +53,7 @@ dependencies {
     compileOnly 'com.github.TownyAdvanced:Towny:0.97.0.11'
     compileOnly 'com.acrobot.chestshop:chestshop:3.12'
     compileOnly('net.milkbowl.vault:VaultAPI:1.7') { transitive = false }
-    compileOnly('net.ess3:EssentialsX:2.18.2') { transitive = false }
+    compileOnly('net.essentialsx:EssentialsX:2.19.0') { transitive = false }
     compileOnly 'me.clip:placeholderapi:2.10.10'
     compileOnly 'co.mcsky:MoeCore:5.7'
 }

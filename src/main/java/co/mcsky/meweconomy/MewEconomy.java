@@ -118,6 +118,7 @@ public class MewEconomy extends ExtendedJavaPlugin {
 
         loadLanguages();
         registerCommands();
+        hookExternal();
     }
 
     @Override
