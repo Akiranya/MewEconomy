@@ -51,7 +51,7 @@ public enum RequisitionBus implements TerminableModule, TerminableConsumer {
         sendMessage(sender, Component.text(message));
     }
 
-    public static void sendMessage(CommandSender sender, Component message) {
+    public static void sendMessage(@NotNull CommandSender sender, Component message) {
         sender.sendMessage(Component.text(MewEconomy.text("command.requisition.prefix")).append(message));
     }
 
@@ -82,7 +82,7 @@ public enum RequisitionBus implements TerminableModule, TerminableConsumer {
         return currentRequisition != null;
     }
 
-    public void giveItem(OfflinePlayer player, ItemStack itemStack) {
+    public void giveItem(@NotNull OfflinePlayer player, ItemStack itemStack) {
         final Optional<Player> opt = Players.get(player.getUniqueId());
         if (opt.isPresent()) {
             final Player p = opt.get();
@@ -114,7 +114,7 @@ public enum RequisitionBus implements TerminableModule, TerminableConsumer {
      * @param seller     the seller
      * @param itemToSell the item to sell
      */
-    public void onSell(Player seller, ItemStack itemToSell) {
+    public void onSell(@NotNull Player seller, ItemStack itemToSell) {
 
         // check conditions
 
@@ -202,7 +202,7 @@ public enum RequisitionBus implements TerminableModule, TerminableConsumer {
         private final Set<Integer> broadcastTimes;
         private int remainingSeconds;
 
-        public RequisitionTask(Requisition requisition) {
+        public RequisitionTask(@NotNull Requisition requisition) {
             this.requisition = requisition;
             this.broadcastTimes = new HashSet<>(MewEconomy.config().broadcast_times);
             this.remainingSeconds = requisition.getDuration();

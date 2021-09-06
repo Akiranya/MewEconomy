@@ -21,7 +21,7 @@ public class DailyBalanceCommand extends BaseCommand {
     public void balance(Player player) {
         final DailyBalanceModel model = MewEconomy.dailyDatasource().getPlayerModel(player.getUniqueId());
         model.testResetBalance();
-        player.sendMessage(MewEconomy.text("command.daily-balance.view", "balance", model.getDailyBalance()));
+        player.sendMessage(MewEconomy.text("command.daily-balance.view", "balance", model.getDailyBalanceString()));
         player.sendMessage(MewEconomy.text("command.daily-balance.time", "time", model.getCooldown().remainingTime(TimeUnit.HOURS)));
     }
 
@@ -31,7 +31,7 @@ public class DailyBalanceCommand extends BaseCommand {
     @Syntax("<player>")
     public void view(CommandSender sender, OfflinePlayer player) {
         final DailyBalanceModel model = MewEconomy.dailyDatasource().getPlayerModel(player.getUniqueId());
-        sender.sendMessage(MewEconomy.text("command.daily-balance.view-others", "player", player.getName(), "balance", model.getDailyBalance()));
+        sender.sendMessage(MewEconomy.text("command.daily-balance.view-others", "player", player.getName(), "balance", model.getDailyBalanceString()));
     }
 
     @Subcommand("add")

@@ -38,22 +38,24 @@ repositories {
     maven { name = 'essentialsx'; url = 'https://repo.essentialsx.net/releases/' }
     maven { name = 'jitpack'; url = 'https://jitpack.io' }
     maven { name = 'nyaacat'; url = 'https://ci.nyaacat.com/maven/' }
+    maven { name = 'extendedclip'; url = 'https://repo.extendedclip.com/content/repositories/placeholderapi/' }
 }
 
 dependencies {
     testImplementation('org.junit.jupiter:junit-jupiter-api:5.7.2')
     testRuntimeOnly('org.junit.jupiter:junit-jupiter-engine:5.7.2')
 
-    compileOnly('io.papermc.paper:paper-api:1.17.1-R0.1-SNAPSHOT')
-    compileOnly('me.lucko:helper:5.6.8')
-    compileOnly('me.lucko:helper-sql:1.3.2')
-    compileOnly('me.lucko:helper-profiles:1.2.0')
-    compileOnly('net.luckperms:api:5.3')
-    compileOnly('com.github.TownyAdvanced:Towny:0.97.0.11')
-    compileOnly('com.acrobot.chestshop:chestshop:3.12')
+    compileOnly 'io.papermc.paper:paper-api:1.17.1-R0.1-SNAPSHOT'
+    compileOnly 'me.lucko:helper:5.6.8'
+    compileOnly 'me.lucko:helper-sql:1.3.2'
+    compileOnly 'me.lucko:helper-profiles:1.2.0'
+    compileOnly 'net.luckperms:api:5.3'
+    compileOnly 'com.github.TownyAdvanced:Towny:0.97.0.11'
+    compileOnly 'com.acrobot.chestshop:chestshop:3.12'
     compileOnly('net.milkbowl.vault:VaultAPI:1.7') { transitive = false }
     compileOnly('net.ess3:EssentialsX:2.18.2') { transitive = false }
-    compileOnly('co.mcsky:MoeCore:5.7')
+    compileOnly 'me.clip:placeholderapi:2.10.10'
+    compileOnly 'co.mcsky:MoeCore:5.7'
 }
 
 test {

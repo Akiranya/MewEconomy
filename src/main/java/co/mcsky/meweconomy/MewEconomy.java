@@ -4,20 +4,20 @@ import co.aikar.commands.PaperCommandManager;
 import co.mcsky.meweconomy.daily.DailyBalanceDatasource;
 import co.mcsky.meweconomy.daily.DailyBalanceFileHandler;
 import co.mcsky.meweconomy.daily.DailyBalanceProcessor;
+import co.mcsky.meweconomy.external.MewEconomyPlaceholder;
 import co.mcsky.meweconomy.requisition.RequisitionBus;
 import co.mcsky.meweconomy.rice.MituanHub;
 import co.mcsky.meweconomy.taxes.ShopTaxProcessor;
 import co.mcsky.moecore.text.Text;
 import co.mcsky.moecore.text.TextRepository;
 import de.themoep.utils.lang.bukkit.LanguageManager;
+import me.clip.placeholderapi.PlaceholderAPI;
 import me.lucko.helper.Schedulers;
 import me.lucko.helper.Services;
 import me.lucko.helper.plugin.ExtendedJavaPlugin;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.entity.Player;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
@@ -47,11 +47,7 @@ public class MewEconomy extends ExtendedJavaPlugin {
         } else {
             String[] list = new String[replacements.length];
             for (int i = 0; i < replacements.length; i++) {
-                if (replacements[i] instanceof Double || replacements[i] instanceof Float) {
-                    list[i] = BigDecimal.valueOf(((Number) replacements[i]).doubleValue()).setScale(config().decimal_round, RoundingMode.HALF_UP).toPlainString();
-                } else {
-                    list[i] = replacements[i].toString();
-                }
+                list[i] = replacements[i].toString();
             }
             return plugin.languageManager.getDefaultConfig().get(key, list);
         }
@@ -153,6 +149,13 @@ public class MewEconomy extends ExtendedJavaPlugin {
             return null;
         });
         this.textRepository = new TextRepository(MewEconomy::text);
+    }
+
+    private void hookExternal() {
+        // load placeholder if it's loaded
+        if (getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
+            new MewEconomyPlaceholder().register();
+        }
     }
 
 }

@@ -1,6 +1,8 @@
 package co.mcsky.meweconomy.daily;
 
 import org.bukkit.OfflinePlayer;
+import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.List;
@@ -22,14 +24,18 @@ public class DailyBalanceDatasource {
         this.playerModelMap.put(playerModel.getPlayerUUID(), playerModel);
     }
 
-    public void addPlayerModels(List<DailyBalanceModel> playerModels) {
+    public void addPlayerModels(@NotNull List<DailyBalanceModel> playerModels) {
         for (DailyBalanceModel p : playerModels) {
             this.playerModelMap.put(p.getPlayerUUID(), p);
         }
     }
 
-    public DailyBalanceModel getPlayerModel(OfflinePlayer offlinePlayer) {
+    public DailyBalanceModel getPlayerModel(@NotNull OfflinePlayer offlinePlayer) {
         return getPlayerModel(offlinePlayer.getUniqueId());
+    }
+
+    public DailyBalanceModel getPlayerModel(@NotNull Player player) {
+        return getPlayerModel(player.getUniqueId());
     }
 
     public DailyBalanceModel getPlayerModel(UUID playerUUID) {

@@ -15,7 +15,7 @@ public class SystemBalanceCommand extends BaseCommand {
     @Default
     @Subcommand("balance")
     public void balance(CommandSender sender) {
-        sender.sendMessage(MewEconomy.text("command.system-balance.view", "balance", MoeCore.systemAccount().getBalance()));
+        sender.sendMessage(MewEconomy.text("command.system-balance.view", "balance", MoeCore.systemAccount().getSystemBalanceString(MewEconomy.config().decimal_round)));
     }
 
     @Subcommand("take")

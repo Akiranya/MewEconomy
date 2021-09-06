@@ -3,6 +3,8 @@ package co.mcsky.meweconomy.daily;
 import co.mcsky.meweconomy.MewEconomy;
 import me.lucko.helper.cooldown.Cooldown;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -37,6 +39,10 @@ public class DailyBalanceModel {
 
     public double getDailyBalance() {
         return dailyBalance;
+    }
+
+    public String getDailyBalanceString() {
+        return BigDecimal.valueOf(getDailyBalance()).setScale(MewEconomy.config().decimal_round, RoundingMode.HALF_UP).toPlainString();
     }
 
     public void setBalance(double newBalance) {
