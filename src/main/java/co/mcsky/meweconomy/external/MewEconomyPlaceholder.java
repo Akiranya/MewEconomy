@@ -13,7 +13,7 @@ public class MewEconomyPlaceholder extends PlaceholderExpansion {
 
     @Override
     public @NotNull String getIdentifier() {
-        return "meco";
+        return "meweconomy";
     }
 
     @Override
@@ -34,12 +34,13 @@ public class MewEconomyPlaceholder extends PlaceholderExpansion {
     @Override
     public String onPlaceholderRequest(Player player, @NotNull String params) {
         params = params.toLowerCase(Locale.ROOT);
-        switch (params) {
+        Object raw =  switch (params) {
             case "daily_balance" -> MewEconomy.dailyDatasource().getPlayerModel(player).getDailyBalanceString();
             case "daily_balance_cooldown" -> MewEconomy.dailyDatasource().getPlayerModel(player).getCooldown().remainingTime(TimeUnit.HOURS);
             case "system_balance" -> MoeCore.systemAccount().getSystemBalanceString(MewEconomy.config().decimal_round);
-        }
-        return null;
+            default -> null;
+        };
+        return raw != null ? raw.toString() : null;
     }
 
 }
