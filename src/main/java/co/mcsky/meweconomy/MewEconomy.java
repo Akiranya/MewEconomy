@@ -11,10 +11,10 @@ import co.mcsky.meweconomy.taxes.ShopTaxProcessor;
 import co.mcsky.moecore.text.Text;
 import co.mcsky.moecore.text.TextRepository;
 import de.themoep.utils.lang.bukkit.LanguageManager;
-import me.clip.placeholderapi.PlaceholderAPI;
 import me.lucko.helper.Schedulers;
 import me.lucko.helper.Services;
 import me.lucko.helper.plugin.ExtendedJavaPlugin;
+import net.ess3.api.IEssentials;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.entity.Player;
 
@@ -32,6 +32,8 @@ public class MewEconomy extends ExtendedJavaPlugin {
     private MituanHub mituan;
     private DailyBalanceFileHandler dailyBalanceFileHandler;
     private DailyBalanceDatasource dailyBalanceDatasource;
+
+    private IEssentials essentials;
 
     public static Logger logger() {
         return plugin.getLogger();
@@ -65,6 +67,10 @@ public class MewEconomy extends ExtendedJavaPlugin {
         return plugin.mituan;
     }
 
+    public static IEssentials essentials() {
+        return plugin.essentials;
+    }
+
     public static DailyBalanceDatasource dailyDatasource() {
         return plugin.dailyBalanceDatasource;
     }
@@ -91,7 +97,14 @@ public class MewEconomy extends ExtendedJavaPlugin {
             eco = Services.load(Economy.class);
         } catch (IllegalStateException e) {
             getLogger().severe(e.getMessage());
-            getLogger().severe("Some vault registration is not present");
+            getLogger().severe("Vault Economy is not present");
+            disable();
+            return;
+        }
+
+        // load essentials
+        if ((essentials = getPlugin("Essentials", IEssentials.class)) == null) {
+            getLogger().severe("Essentials is not loaded");
             disable();
             return;
         }
@@ -153,9 +166,9 @@ public class MewEconomy extends ExtendedJavaPlugin {
     }
 
     private void hookExternal() {
-        // load placeholder if it's loaded
         if (getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
             new MewEconomyPlaceholder().register();
+            getLogger().info("Hooked into PlaceholderAPI");
         }
     }
 

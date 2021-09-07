@@ -3,7 +3,6 @@ package co.mcsky.meweconomy.rice;
 import co.aikar.commands.ACFBukkitUtil;
 import co.mcsky.meweconomy.MewEconomy;
 import co.mcsky.moecore.luckperms.LuckPermsUtil;
-import com.earth2me.essentials.IEssentials;
 import com.earth2me.essentials.User;
 import com.earth2me.essentials.api.IWarps;
 import com.earth2me.essentials.commands.WarpNotFoundException;
@@ -28,16 +27,32 @@ import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.regex.Pattern;
 
-import static co.mcsky.meweconomy.MewEconomy.plugin;
-
 public class MituanHub implements TerminableModule {
 
     private static final String ESS_PER_WARP_PERM_PREFIX = "essentials.warps.";
 
-    private final IEssentials ess;
-
-    public MituanHub() {
-        this.ess = (net.ess3.api.IEssentials) plugin.getServer().getPluginManager().getPlugin("Essentials");
+    @Override
+    public void setup(@NotNull TerminableConsumer consumer) {
+        // 如果玩家是会员
+        // 在加入游戏时需要向共享权限组添加传送点的权限
+        // 在退出游戏时从共享权限组中移除传送点的权限
+        final MetadataKey<Empty> vip = MetadataKey.createEmptyKey("vip");
+        Events.subscribe(PlayerJoinEvent.class)
+                .filter(e -> MewEconomy.config().vip_enabled)
+                .filter(e -> isPlayerVip(e.getPlayer()))
+                .handler(e -> {
+                    // 如果玩家是米团，给他添加一个 metadata
+                    // 这样的话，如果玩家在线途中米团权限过期，我们仍能够
+                    // 正确的把他的传送点权限取消
+                    Metadata.provideForPlayer(e.getPlayer()).put(vip, Empty.instance());
+                    addSharedWarpPermission(e.getPlayer().getName().toLowerCase());
+                })
+                .bindWith(consumer);
+        Events.subscribe(PlayerQuitEvent.class)
+                .filter(e -> MewEconomy.config().vip_enabled)
+                .filter(e -> Metadata.provideForPlayer(e.getPlayer()).has(vip))
+                .handler(e -> removeSharedWarpPermission(e.getPlayer().getName().toLowerCase()))
+                .bindWith(consumer);
     }
 
     /**
@@ -50,7 +65,7 @@ public class MituanHub implements TerminableModule {
             return;
         }
 
-        final IWarps warps = ess.getWarps();
+        final IWarps warps = MewEconomy.essentials().getWarps();
         Location warpLoc = null;
 
         try {
@@ -58,7 +73,7 @@ public class MituanHub implements TerminableModule {
         } catch (final WarpNotFoundException | InvalidWorldException ignored) {
         }
 
-        final User iu = ess.getUser(p);
+        final User iu = MewEconomy.essentials().getUser(p);
         if (warpLoc == null || name.equalsIgnoreCase(p.getName()) || iu.isAuthorized("essentials.warp.overwrite." + StringUtil.safeString(name))) {
             Date expiryDate = iu.getCommandCooldownExpiry("setwarp");
             if (expiryDate != null && expiryDate.after(new Date())) {
@@ -83,30 +98,6 @@ public class MituanHub implements TerminableModule {
         } else {
             p.sendMessage(MewEconomy.text("command.mituan.setwarp.overwrite"));
         }
-    }
-
-    @Override
-    public void setup(@NotNull TerminableConsumer consumer) {
-        // 如果玩家是会员
-        // 在加入游戏时需要向共享权限组添加传送点的权限
-        // 在退出游戏时从共享权限组中移除传送点的权限
-        final MetadataKey<Empty> vip = MetadataKey.createEmptyKey("vip");
-        Events.subscribe(PlayerJoinEvent.class)
-                .filter(e -> MewEconomy.config().vip_enabled)
-                .filter(e -> isPlayerVip(e.getPlayer()))
-                .handler(e -> {
-                    // 如果玩家是米团，给他添加一个 metadata
-                    // 这样的话，如果玩家在线途中米团权限过期，我们仍能够
-                    // 正确的把他的传送点权限取消
-                    Metadata.provideForPlayer(e.getPlayer()).put(vip, Empty.instance());
-                    addSharedWarpPermission(e.getPlayer().getName().toLowerCase());
-                })
-                .bindWith(consumer);
-        Events.subscribe(PlayerQuitEvent.class)
-                .filter(e -> MewEconomy.config().vip_enabled)
-                .filter(e -> Metadata.provideForPlayer(e.getPlayer()).has(vip))
-                .handler(e -> removeSharedWarpPermission(e.getPlayer().getName().toLowerCase()))
-                .bindWith(consumer);
     }
 
     private boolean isPlayerVip(Player player) {
